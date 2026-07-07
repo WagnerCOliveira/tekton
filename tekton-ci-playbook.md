@@ -2,7 +2,9 @@
 
 Guia passo a passo para **montar, entender, manter e recuperar** o namespace `ci`, que concentra toda a plataforma de CI/CD do cluster.
 
-> Complemento ao [tekton-multitenant-e-playbook.md](tekton-multitenant-e-playbook.md). Enquanto aquele foca em **onboarding de projetos**, este documento é sobre a **plataforma em si**.
+> Complemento ao [tekton-multitenant.md](tekton-multitenant.md). Enquanto aquele foca em **arquitetura e onboarding**, este documento é sobre a **operação da plataforma em si**.
+> Para troubleshooting consolidado, consulte [troubleshooting.md](troubleshooting.md).
+> Para diagramas, consulte [gemini-prompts.md](gemini-prompts.md).
 
 ---
 
@@ -17,7 +19,6 @@ Guia passo a passo para **montar, entender, manter e recuperar** o namespace `ci
 7. [🎯 PLAYBOOK: Rotacionar o token do webhook](#7--playbook-rotacionar-o-token-do-webhook)
 8. [🎯 PLAYBOOK: Recuperar o `ci` após incidente](#8--playbook-recuperar-o-ci-após-incidente)
 9. [Comandos de diagnóstico rápido](#9-comandos-de-diagnóstico-rápido)
-10. [Prompts para diagramas com Gemini](#10-prompts-para-diagramas-com-gemini)
 
 ---
 
@@ -1030,7 +1031,25 @@ source ~/.bashrc
 
 ---
 
-## 10. Prompts para diagramas com Gemini
+## 10. Diagramas e referências
+
+- Prompts para gerar diagramas: [gemini-prompts.md](gemini-prompts.md)
+
+---
+
+## Referências
+
+- [Tekton Triggers docs](https://tekton.dev/docs/triggers/)
+- [Tekton Cluster Resolver](https://tekton.dev/docs/pipelines/cluster-resolver/)
+- [Tekton Bundles Resolver](https://tekton.dev/docs/pipelines/bundle-resolver/)
+- [CEL Language Definition](https://github.com/google/cel-spec/blob/master/doc/langdef.md)
+- [Kubernetes RBAC Good Practices](https://kubernetes.io/docs/concepts/security/rbac-good-practices/)
+
+---
+
+<!-- Prompts Gemini movidos para gemini-prompts.md -->
+
+## Prompts para diagramas com Gemini (legado)
 
 ### Prompt 1 — Anatomia do namespace ci
 

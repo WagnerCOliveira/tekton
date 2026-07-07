@@ -1,6 +1,10 @@
 # Infraestrutura de CI/CD com Tekton em Cluster k3s
 
-Documentação completa e atualizada da montagem de uma infraestrutura de pipelines com **Tekton** em cluster **k3s** local (1 server + 2 agents), consumindo **Task Bundles** de um **registry interno** e disparado por **webhook do GitLab Community**.
+Guia de instalação e configuração da infraestrutura base: Tekton em cluster **k3s** local (1 server + 2 agents), **Task Bundles** em registry interno e webhook do **GitLab Community**.
+
+> Para evolução multi-tenant, consulte [tekton-multitenant.md](tekton-multitenant.md).
+> Para operação da plataforma, consulte [tekton-ci-playbook.md](tekton-ci-playbook.md).
+> Para problemas conhecidos, consulte [troubleshooting.md](troubleshooting.md).
 
 ---
 
@@ -18,8 +22,6 @@ Documentação completa e atualizada da montagem de uma infraestrutura de pipeli
 10. [Fase 7 — Triggers e webhook do GitLab](#10-fase-7--triggers-e-webhook-do-gitlab)
 11. [Fase 8 — Autenticação Git no clone](#11-fase-8--autenticação-git-no-clone)
 12. [Fase 9 — Tekton Dashboard](#12-fase-9--tekton-dashboard)
-13. [Prompts para gerar diagramas com Gemini](#13-prompts-para-gerar-diagramas-com-gemini)
-14. [Troubleshooting](#14-troubleshooting)
 
 ---
 
@@ -1229,7 +1231,30 @@ O Dashboard mostra:
 
 ---
 
-## 13. Prompts para gerar diagramas com Gemini
+## 13. Diagramas e troubleshooting
+
+- Prompts para gerar diagramas: [gemini-prompts.md](gemini-prompts.md)
+- Problemas conhecidos desta fase: [troubleshooting.md](troubleshooting.md)
+
+---
+
+## Referências
+
+- [Tekton Pipelines](https://tekton.dev/docs/pipelines/)
+- [Tekton Triggers](https://tekton.dev/docs/triggers/)
+- [Tekton Bundles Resolver](https://tekton.dev/docs/pipelines/bundle-resolver/)
+- [k3s registries.yaml](https://docs.k3s.io/installation/private-registry)
+- [Kaniko](https://github.com/GoogleContainerTools/kaniko)
+- [GitLab CE Docker](https://docs.gitlab.com/ee/install/docker.html)
+- [GitLab Webhooks](https://docs.gitlab.com/ee/user/project/integrations/webhooks.html)
+
+---
+
+<!-- Os prompts Gemini foram movidos para gemini-prompts.md -->
+<!-- O troubleshooting foi movido para troubleshooting.md -->
+<!-- Conteúdo original preservado abaixo para referência -->
+
+## Prompts para gerar diagramas com Gemini (legado)
 
 Cole cada prompt no **Gemini** (versão com geração de imagem, como Gemini Advanced ou Nano Banana / Imagen). Todos escritos em inglês para melhor fidelidade da renderização.
 

@@ -1,3 +1,7 @@
+> **⚠️ ARQUIVO SUPERSEDIDO** — O conteúdo deste arquivo foi consolidado e reorganizado em [tekton-multitenant.md](tekton-multitenant.md). Este arquivo é mantido apenas para referência histórica e pode ser removido.
+
+---
+
 # Refatoração Multi-tenant e Playbook de Novas Apps — Tekton no k3s
 
 Documentação da evolução da plataforma Tekton para **multi-tenant com múltiplos stacks**, incluindo o **playbook detalhado** para adicionar novas aplicações — passo a passo, com explicação de cada decisão.

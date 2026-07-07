@@ -1,3 +1,7 @@
+> **⚠️ ARQUIVO SUPERSEDIDO** — O conteúdo deste arquivo foi consolidado e reorganizado em [tekton-multitenant.md](tekton-multitenant.md). Este arquivo é mantido apenas para referência histórica e pode ser removido.
+
+---
+
 # Refatoração para o Padrão B — Pipelines multi-tenant no Tekton
 
 Documentação da migração da arquitetura Tekton de **single-tenant** (tudo em `ci`) para **multi-tenant** (Pipelines em `ci`, PipelineRuns isolados por projeto).
