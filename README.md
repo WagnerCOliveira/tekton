@@ -6,32 +6,7 @@ Plataforma de CI/CD **multi-tenant** construída com Tekton em cluster k3s local
 
 ## Arquitetura
 
-```
-  Developer
-  git push ──────▶  GitLab CE (192.168.56.1:8929)
-                           │ webhook POST
-                           ▼
-              ┌────────────────────────────┐
-              │  namespace: ci  (plataforma)│
-              │  EventListener (porta 32080)│
-              │  Pipelines: java, node, ... │
-              │  CEL routing por prefixo   │
-              └────────────────────────────┘
-                           │
-            ┌──────────────┼──────────────┐
-            ▼              ▼              ▼
-     proj-backend-*  proj-frontend-*  proj-python-*
-     PipelineRuns    PipelineRuns      PipelineRuns
-            │
-            │ resolver: bundles
-            ▼
-     Registry interno (porta 32000)
-     tekton/git-clone:v1
-     tekton/maven-build:v1
-     tekton/node-build:v1
-     tekton/kaniko-build-push:v1
-     apps/<repo>:<sha>
-```
+![Diagrama de topologia de rede](imagens/fluxo-do-webhook-ate-a-imagem-publicada.png)
 
 ---
 

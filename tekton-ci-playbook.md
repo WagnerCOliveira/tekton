@@ -103,45 +103,10 @@ Ficam no registry interno (`registry.registry.svc.cluster.local:5000/tekton/*:v1
 
 Antes de mexer em qualquer coisa, entenda a cadeia de dependências:
 
-```
-                          GitLab (webhook POST)
-                                  │
-                                  ▼
-                         Service NodePort 32080
-                                  │
-                                  ▼
-                    Pod EventListener (gitlab-listener)
-                                  │
-              usa ─────┬───────────┴──────────┐
-                       │                      │
-                       ▼                      ▼
-              tekton-triggers-sa      Trigger gitlab-push-trigger
-              (com 2 CRBs +           │
-               1 RB + 1 SA-CRB)       ├──▶ interceptor "gitlab"
-                                      │       └─▶ Secret gitlab-webhook-secret
-                                      │
-                                      ├──▶ interceptor "cel"
-                                      │       └─▶ overlays + filter
-                                      │
-                                      ├──▶ TriggerBinding gitlab-push-binding
-                                      │
-                                      └──▶ TriggerTemplate app-template
-                                                  │
-                                                  ▼
-                                          Cria PipelineRun em proj-*
-                                                  │
-                                                  ▼
-                                  pipelineRef via cluster resolver
-                                                  │
-                                                  ▼
-                                     Pipeline em ci (java/node)
-                                                  │
-                                                  ▼
-                                  taskRef via bundles resolver
-                                                  │
-                                                  ▼
-                                    Task Bundles no registry
-```
+![](imagens/cadeia-de-dependencias-do-namespace-ci.png)
+
+![](imagens/ciclo-de-vida-de-uma-mudanca-no-ci.png)
+
 
 ### O que quebra se…
 

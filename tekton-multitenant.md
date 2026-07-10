@@ -68,44 +68,7 @@ Isso funciona para um único projeto, mas não escala. Se um segundo time entrar
 
 ## 3. Arquitetura final escolhida (Padrão B)
 
-```
-┌───────────────────────────────────────────────────────────────┐
-│  ns: ci  (concentrador — plataforma)                          │
-│                                                               │
-│  ├─ Pipeline: java-app-pipeline                               │
-│  │     (Tasks via resolver: bundles)                          │
-│  ├─ Pipeline: node-app-pipeline                               │
-│  │     (Tasks via resolver: bundles)                          │
-│  ├─ EventListener: gitlab-listener (NodePort 32080)           │
-│  ├─ Trigger: gitlab-push-trigger (interceptors: gitlab + cel) │
-│  ├─ TriggerBinding: gitlab-push-binding                       │
-│  ├─ TriggerTemplate: app-template                             │
-│  ├─ ServiceAccount: tekton-triggers-sa                        │
-│  ├─ Secret: gitlab-webhook-secret                             │
-│  └─ RBAC: cria PipelineRuns em qualquer namespace             │
-└───────────────────────────────────────────────────────────────┘
-                            │
-             CEL: 'proj-' + body.project.name
-                            │
-         ┌──────────────────┼──────────────────┐
-         ▼                  ▼                  ▼
-┌─────────────────┐ ┌──────────────────┐ ┌──────────────────┐
-│ proj-backend-*  │ │ proj-frontend-*  │ │ proj-python-*    │
-│ SA: pipeline-   │ │ SA: pipeline-    │ │ (futura stack)   │
-│    runner       │ │    runner        │ │                  │
-│ Secret: gitlab- │ │ Secret: gitlab-  │ │                  │
-│   basic-auth    │ │   basic-auth     │ │                  │
-│ PipelineRuns    │ │ PipelineRuns     │ │                  │
-└─────────────────┘ └──────────────────┘ └──────────────────┘
-         │
-         │ resolver: cluster (busca Pipeline no ci)
-         ▼
-Pipeline java/node-app-pipeline (no ci)
-         │
-         │ resolver: bundles
-         ▼
-Task Bundles no registry (git-clone, maven/node, kaniko)
-```
+![Arquitetura multi-tenant final](imagens/arquitetura-multi-tenant-final.png)
 
 ---
 
