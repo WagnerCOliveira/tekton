@@ -16,6 +16,7 @@ Plataforma de CI/CD **multi-tenant** construída com Tekton em cluster k3s local
 |---|---|---|
 | [tekton-lab-setup.md](tekton-lab-setup.md) | Infra base: k3s, Tekton, Registry, Task Bundles, GitLab, primeira pipeline | Montando do zero |
 | [tekton-multitenant.md](tekton-multitenant.md) | Arquitetura multi-tenant: decisão, implementação, multi-stack, onboarding | Evoluindo para multi-tenant |
+| [tekton-template-novo-projeto-java.md](tekton-template-novo-projeto-java.md) | Template copia-e-cola: criar namespace + onboarding de uma nova app Java | Adicionando uma app Java nova |
 | [tekton-ci-playbook.md](tekton-ci-playbook.md) | Operação do namespace `ci`: inventário, playbooks, diagnóstico | Operando a plataforma |
 | [troubleshooting.md](troubleshooting.md) | Todos os problemas encontrados, organizados por categoria | Investigando um problema |
 | [gemini-prompts.md](gemini-prompts.md) | Prompts para gerar diagramas com Gemini/Imagen | Gerando diagramas |
