@@ -1,0 +1,42 @@
+# Trigger com dois interceptors (gitlab + cel) — o coração do roteamento multi-tenant.
+# Ao adicionar uma nova stack, atualizar tanto o `filter` quanto o overlay `pipeline-name`
+# (ver docs/04-ci-operacional.md §5 — playbook "Adicionar suporte a uma nova stack").
+apiVersion: triggers.tekton.dev/v1beta1
+kind: Trigger
+metadata:
+  name: gitlab-push-trigger
+  namespace: ci
+spec:
+  serviceAccountName: tekton-triggers-sa
+  interceptors:
+  - ref:
+      name: "gitlab"
+    params:
+    - name: secretRef
+      value:
+        secretName: gitlab-webhook-secret
+        secretKey: secretToken
+    - name: eventTypes
+      value: ["Push Hook"]
+  - ref:
+      name: "cel"
+    params:
+    - name: filter
+      value: >-
+        body.project.name.startsWith('frontend-') ||
+        body.project.name.startsWith('backend-')
+    - name: overlays
+      value:
+      - key: target-namespace
+        expression: "'proj-' + body.project.name"
+      - key: repo-name
+        expression: "body.project.name"
+      - key: pipeline-name
+        expression: |
+          body.project.name.startsWith('frontend-') ? 'node-app-pipeline' :
+          body.project.name.startsWith('backend-')  ? 'java-app-pipeline' :
+          'UNKNOWN'
+  bindings:
+  - ref: gitlab-push-binding
+  template:
+    ref: app-template

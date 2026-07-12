@@ -1,0 +1,51 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: java-app-pipeline
+  namespace: ci
+spec:
+  params:
+  - name: repo-url
+    type: string
+  - name: revision
+    type: string
+    default: main
+  - name: image
+    type: string
+  workspaces:
+  - name: shared
+  tasks:
+  - name: clone
+    taskRef:
+      resolver: bundles
+      params:
+      - { name: bundle, value: "registry.registry.svc.cluster.local:5000/tekton/git-clone:v1" }
+      - { name: name, value: git-clone }
+      - { name: kind, value: task }
+    params:
+    - { name: url, value: "$(params.repo-url)" }
+    - { name: revision, value: "$(params.revision)" }
+    workspaces:
+    - { name: output, workspace: shared }
+  - name: build
+    runAfter: [clone]
+    taskRef:
+      resolver: bundles
+      params:
+      - { name: bundle, value: "registry.registry.svc.cluster.local:5000/tekton/maven-build:v1" }
+      - { name: name, value: maven-build }
+      - { name: kind, value: task }
+    workspaces:
+    - { name: source, workspace: shared }
+  - name: image
+    runAfter: [build]
+    taskRef:
+      resolver: bundles
+      params:
+      - { name: bundle, value: "registry.registry.svc.cluster.local:5000/tekton/kaniko-build-push:v1" }
+      - { name: name, value: kaniko-build-push }
+      - { name: kind, value: task }
+    params:
+    - { name: image, value: "$(params.image)" }
+    workspaces:
+    - { name: source, workspace: shared }

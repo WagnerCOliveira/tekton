@@ -1,6 +1,6 @@
 # Template — Criar Namespace para Nova Aplicação Java
 
-Template pronto para copiar/colar: cria o namespace, RBAC e secrets de uma **nova aplicação Java/Maven** (`backend-*`) na plataforma multi-tenant já existente. É a versão "preencha as variáveis" do playbook completo em [tekton-multitenant.md §12](tekton-multitenant.md#12--playbook-adicionar-uma-nova-aplicação).
+Template pronto para copiar/colar: cria o namespace, RBAC e secrets de uma **nova aplicação Java/Maven** (`backend-*`) na plataforma multi-tenant já existente. É a versão "preencha as variáveis" do playbook completo em [docs/02-arquitetura-multitenant.md §12](02-arquitetura-multitenant.md#12--playbook-adicionar-uma-nova-aplicação).
 
 > Só cria coisas no **namespace do projeto** (`proj-<repo>`). Não toca no namespace `ci` — o Pipeline `java-app-pipeline` já existe e é compartilhado por todas as apps Java.
 
@@ -59,6 +59,8 @@ Manual, via UI (não dá pra automatizar sem a API do GitLab):
 ---
 
 ## 3. Script único — namespace, secret e ServiceAccount
+
+> 🔧 **Playbook** — este bloco equivale a `PAT=<seu-pat> ./scripts/onboarding/new-app.sh backend ${APP_NAME}` ([`scripts/onboarding/new-app.sh`](../scripts/onboarding/new-app.sh)). O script cobre as mesmas variáveis do passo 1; o bloco manual abaixo continua útil para quem quer rodar comando a comando.
 
 Com as variáveis do passo 1 exportadas, rode o bloco inteiro de uma vez:
 
@@ -204,16 +206,16 @@ Tempo estimado: ~5 minutos (fora o tempo de build do Maven/Kaniko).
 
 | Sintoma | Onde olhar |
 |---|---|
-| Webhook retorna erro diferente de 202 | Token errado ou EL fora do ar — ver [tekton-ci-playbook.md §8](tekton-ci-playbook.md#8--playbook-recuperar-o-ci-após-incidente) |
-| PipelineRun nunca é criado | Log do EL mostra `forbidden`? RBAC do `ci` — ver [tekton-ci-playbook.md §3](tekton-ci-playbook.md#3-mapa-mental-quem-depende-de-quem) |
+| Webhook retorna erro diferente de 202 | Token errado ou EL fora do ar — ver [docs/04-ci-operacional.md §8](04-ci-operacional.md#8--playbook-recuperar-o-ci-após-incidente) |
+| PipelineRun nunca é criado | Log do EL mostra `forbidden`? RBAC do `ci` — ver [docs/04-ci-operacional.md §3](04-ci-operacional.md#3-mapa-mental-quem-depende-de-quem) |
 | PipelineRun criado mas falha no clone | Secret `gitlab-basic-auth` ou anotação `tekton.dev/git-0` erradas |
 | Falha no Kaniko | Falta `Dockerfile` na raiz, ou `pom.xml` não gera `.jar` em `target/` |
-| Lista completa de problemas conhecidos | [troubleshooting.md](troubleshooting.md) |
+| Lista completa de problemas conhecidos | [docs/05-troubleshooting.md](05-troubleshooting.md) |
 
 ---
 
 ## Referências
 
-- [tekton-multitenant.md](tekton-multitenant.md) — arquitetura completa e o playbook narrativo original
-- [tekton-ci-playbook.md](tekton-ci-playbook.md) — operação do namespace `ci`
-- [troubleshooting.md](troubleshooting.md) — problemas conhecidos
+- [docs/02-arquitetura-multitenant.md](02-arquitetura-multitenant.md) — arquitetura completa e o playbook narrativo original
+- [docs/04-ci-operacional.md](04-ci-operacional.md) — operação do namespace `ci`
+- [docs/05-troubleshooting.md](05-troubleshooting.md) — problemas conhecidos

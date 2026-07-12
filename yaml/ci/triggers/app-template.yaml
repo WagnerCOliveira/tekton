@@ -1,0 +1,41 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: app-template
+  namespace: ci
+spec:
+  params:
+  - name: repo-url
+  - name: revision
+  - name: short-sha
+  - name: target-namespace
+  - name: repo-name
+  - name: pipeline-name
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1
+    kind: PipelineRun
+    metadata:
+      generateName: $(tt.params.repo-name)-run-
+      namespace: $(tt.params.target-namespace)
+    spec:
+      taskRunTemplate:
+        serviceAccountName: pipeline-runner
+      pipelineRef:
+        resolver: cluster
+        params:
+        - { name: kind, value: pipeline }
+        - { name: name, value: $(tt.params.pipeline-name) }
+        - { name: namespace, value: ci }
+      params:
+      - { name: repo-url, value: $(tt.params.repo-url) }
+      - { name: revision, value: $(tt.params.revision) }
+      - name: image
+        value: registry.registry.svc.cluster.local:5000/apps/$(tt.params.repo-name):$(tt.params.short-sha)
+      workspaces:
+      - name: shared
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 2Gi

@@ -4,6 +4,10 @@ Plataforma de CI/CD **multi-tenant** construída com Tekton em cluster k3s local
 
 ---
 
+## Sobre esta documentação
+
+Este `README.md` é o índice central do projeto. Os documentos técnicos aprofundados vivem em [`docs/`](docs/), scripts operacionais em [`scripts/`](scripts/), manifestos K8s/Tekton canônicos em [`yaml/`](yaml/), e as decisões arquitetônicas em [`docs/decisions/`](docs/decisions/) (ADRs). Todo o histórico de mudanças fica em [`CHANGELOG.md`](CHANGELOG.md).
+
 ## Arquitetura
 
 ![Diagrama de topologia de rede](imagens/fluxo-do-webhook-ate-a-imagem-publicada.png)
@@ -12,23 +16,39 @@ Plataforma de CI/CD **multi-tenant** construída com Tekton em cluster k3s local
 
 ## Mapa da documentação
 
-| Arquivo | O que cobre | Quando ler |
+| Documento | O que cobre | Quando ler |
 |---|---|---|
-| [tekton-lab-setup.md](tekton-lab-setup.md) | Infra base: k3s, Tekton, Registry, Task Bundles, GitLab, primeira pipeline | Montando do zero |
-| [tekton-multitenant.md](tekton-multitenant.md) | Arquitetura multi-tenant: decisão, implementação, multi-stack, onboarding | Evoluindo para multi-tenant |
-| [tekton-template-novo-projeto-java.md](tekton-template-novo-projeto-java.md) | Template copia-e-cola: criar namespace + onboarding de uma nova app Java | Adicionando uma app Java nova |
-| [tekton-ci-playbook.md](tekton-ci-playbook.md) | Operação do namespace `ci`: inventário, playbooks, diagnóstico | Operando a plataforma |
-| [troubleshooting.md](troubleshooting.md) | Todos os problemas encontrados, organizados por categoria | Investigando um problema |
-| [gemini-prompts.md](gemini-prompts.md) | Prompts para gerar diagramas com Gemini/Imagen | Gerando diagramas |
-| [helm-backlog.md](helm-backlog.md) | Backlog completo da migração para Helm (38 histórias, 8 sprints) | Planejando a migração Helm |
+| [docs/01-infraestrutura-base.md](docs/01-infraestrutura-base.md) | Infra base: k3s, Tekton, Registry, Task Bundles, GitLab, primeira pipeline | Montando do zero |
+| [docs/02-arquitetura-multitenant.md](docs/02-arquitetura-multitenant.md) | Arquitetura multi-tenant: decisão, implementação, multi-stack, onboarding | Evoluindo para multi-tenant |
+| [docs/03-onboarding-app-java.md](docs/03-onboarding-app-java.md) | Template copia-e-cola: criar namespace + onboarding de uma nova app Java | Adicionando uma app Java nova |
+| [docs/04-ci-operacional.md](docs/04-ci-operacional.md) | Operação do namespace `ci`: inventário, playbooks, diagnóstico | Operando a plataforma |
+| [docs/05-troubleshooting.md](docs/05-troubleshooting.md) | Todos os problemas encontrados, organizados por categoria | Investigando um problema |
+| [docs/06-diagramas-prompts.md](docs/06-diagramas-prompts.md) | Prompts para gerar diagramas com Gemini/Imagen | Gerando diagramas |
+| [docs/roadmap-helm.md](docs/roadmap-helm.md) | Backlog completo da migração para Helm (38 histórias, 8 sprints) | Planejando a migração Helm |
+| [docs/decisions/](docs/decisions/) | ADRs — por que a arquitetura é do jeito que é | Entender uma decisão passada, ou propor uma nova |
+| [CHANGELOG.md](CHANGELOG.md) | Histórico de mudanças versionado (Keep a Changelog + SemVer) | Ver o que mudou recentemente |
 
 ### Ordem sugerida de leitura
 
 ```
-1. tekton-lab-setup.md     ← monta a infra e valida um ciclo completo
-2. tekton-multitenant.md   ← evolui para multi-tenant e onboarda apps
-3. tekton-ci-playbook.md   ← referência operacional da plataforma
-4. troubleshooting.md      ← quando algo não funciona
+1. docs/01-infraestrutura-base.md     ← monta a infra e valida um ciclo completo
+2. docs/02-arquitetura-multitenant.md ← evolui para multi-tenant e onboarda apps
+3. docs/04-ci-operacional.md          ← referência operacional da plataforma
+4. docs/05-troubleshooting.md         ← quando algo não funciona
+```
+
+### Scripts e manifestos
+
+```
+scripts/
+├── setup/       ← bootstrap da plataforma (01-install-tekton.sh ... 05-publish-task-bundles.sh)
+├── ops/         ← operação do dia a dia (diagnose-el.sh, rotate-webhook-token.sh, ...)
+└── onboarding/  ← new-app.sh <backend|frontend> <nome>
+
+yaml/
+├── ci/          ← Pipelines, RBAC, Triggers e registry do namespace ci (fonte de verdade)
+├── projects/    ← template de ServiceAccount para namespaces proj-*
+└── tasks/       ← Tasks fonte dos Task Bundles publicados no registry
 ```
 
 ---
@@ -67,7 +87,7 @@ Host Notebook
 
 ---
 
-## Convenções de nomeação
+## Convenções vigentes
 
 | Elemento | Padrão | Exemplo |
 |---|---|---|
@@ -78,8 +98,9 @@ Host Notebook
 | Secret de auth Git | `gitlab-basic-auth` (fixo por namespace) | — |
 | Task Bundle | `tekton/<task>:v<N>` | `tekton/git-clone:v1` |
 | Imagem publicada | `apps/<repo>:<sha>` | `apps/backend-payments:82a57d1` |
+| Portas expostas | 32000 (registry), 32080 (webhook), 32097 (dashboard) | — |
 
-**Por que o prefixo no repo:** o interceptor CEL do EventListener lê `body.project.name` e usa o prefixo para decidir qual Pipeline aplicar. Sem prefixo, o evento é descartado silenciosamente.
+**Por que o prefixo no repo:** o interceptor CEL do EventListener lê `body.project.name` e usa o prefixo para decidir qual Pipeline aplicar. Sem prefixo, o evento é descartado silenciosamente — ver [ADR-002](docs/decisions/ADR-002-roteamento-cel-prefixo.md).
 
 ---
 
@@ -102,6 +123,16 @@ curl -s http://192.168.56.110:32000/v2/tekton/git-clone/tags/list
 
 ---
 
+## Início rápido — top comandos
+
+| Preciso... | Comando |
+|---|---|
+| Ver status geral da plataforma | `./scripts/ops/diagnose-el.sh` |
+| Adicionar uma nova app | `PAT=<pat> ./scripts/onboarding/new-app.sh backend <nome>` — ver [docs/03-onboarding-app-java.md](docs/03-onboarding-app-java.md) |
+| Ver os últimos runs | `./scripts/ops/list-all-runs.sh` |
+| Recuperar o EL (após mudar Trigger/Secret) | `./scripts/ops/restart-el.sh` |
+| Acessar o dashboard | `http://192.168.56.110:32097` |
+
 ## Checklist rápido — adicionar uma nova app
 
 ```
@@ -115,13 +146,31 @@ curl -s http://192.168.56.110:32000/v2/tekton/git-clone/tags/list
 [ ] git push → pipeline roda automaticamente
 ```
 
-Tempo estimado: ~5 minutos por app.
+Tempo estimado: ~5 minutos por app. Automatizável via `scripts/onboarding/new-app.sh` (webhook e push continuam manuais).
 
 ---
 
+## O que mudou recente
+
+Últimas mudanças arquitetônicas significativas. Para histórico completo, ver [CHANGELOG.md](CHANGELOG.md).
+
+| Data | Mudança | Impacto | Link |
+|---|---|---|---|
+| 2026-07-12 | Consolidação da documentação: `docs/`, `scripts/`, `yaml/`, ADRs, CHANGELOG | Estrutura fixa para navegar a documentação e operar a plataforma via script em vez de copiar/colar heredocs | [_workspace/CONSOLIDATION-REPORT.md](_workspace/CONSOLIDATION-REPORT.md) |
+| 2026-07-06 (aproximado) | Roteamento CEL por prefixo (`frontend-*`/`backend-*`) | Plataforma passou a suportar múltiplas stacks a partir de um único EventListener | [ADR-002](docs/decisions/ADR-002-roteamento-cel-prefixo.md) |
+| 2026-07-05/06 (aproximado) | Padrão B multi-tenant adotado | Cada projeto tem seu namespace isolado (`proj-<repo>`); Pipeline permanece compartilhado em `ci` | [ADR-001](docs/decisions/ADR-001-padrao-b-multitenant.md) |
+
+---
+
+## Estratégia de evolução
+
+- Decisões arquitetônicas (convenções que afetam múltiplos projetos, mudança de padrão, escolha de tecnologia) viram um **ADR** em [`docs/decisions/`](docs/decisions/) — ver o [índice](docs/decisions/README.md) e o [template](docs/decisions/_template.md).
+- Todo o resto (correções, novas features operacionais) entra no [`CHANGELOG.md`](CHANGELOG.md).
+- Onboarding de app nova **não** gera entrada no CHANGELOG — é operação corrente, coberta pelo checklist acima.
+
 ## Roadmap
 
-1. **Helm** — migrar toda a configuração para charts Helm (ver [helm-backlog.md](helm-backlog.md))
+1. **Helm** — migrar toda a configuração para charts Helm (ver [docs/roadmap-helm.md](docs/roadmap-helm.md))
 2. **Testes** — Task `maven-test` antes do build, JaCoCo para coverage
 3. **CD com ArgoCD** — repo GitOps + Applications sincronizando manifests
 4. **Segurança** — Trivy scan na imagem, Cosign para assinatura

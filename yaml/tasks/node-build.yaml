@@ -1,0 +1,34 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: node-build
+spec:
+  description: Instala dependências e compila uma aplicação Node.js.
+  params:
+  - name: node-version
+    type: string
+    default: "20"
+  - name: build-command
+    type: string
+    default: "npm run build"
+  - name: install-command
+    type: string
+    default: "npm install"     # npm install, não npm ci (evita exigir package-lock.json)
+  workspaces:
+  - name: source
+  steps:
+  - name: install
+    image: node:$(params.node-version)-alpine
+    workingDir: $(workspaces.source.path)
+    script: |
+      #!/bin/sh
+      set -eu
+      $(params.install-command)
+  - name: build
+    image: node:$(params.node-version)-alpine
+    workingDir: $(workspaces.source.path)
+    script: |
+      #!/bin/sh
+      set -eu
+      $(params.build-command)
+      ls -lh dist/ 2>/dev/null || echo "dist nao encontrado"

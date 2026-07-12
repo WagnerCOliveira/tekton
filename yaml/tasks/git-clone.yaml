@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: git-clone
+spec:
+  description: Clona um repositório Git no workspace.
+  params:
+  - name: url
+    type: string
+  - name: revision
+    type: string
+    default: main
+  workspaces:
+  - name: output
+  results:
+  - name: commit
+  steps:
+  - name: clone
+    image: alpine/git:2.43.0
+    script: |
+      #!/bin/sh
+      set -eu
+      cd $(workspaces.output.path)
+      git clone $(params.url) .
+      git checkout $(params.revision)
+      COMMIT=$(git rev-parse HEAD)
+      printf "%s" "$COMMIT" > $(results.commit.path)

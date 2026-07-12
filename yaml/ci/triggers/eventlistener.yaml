@@ -1,0 +1,23 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: gitlab-listener
+  namespace: ci
+spec:
+  serviceAccountName: tekton-triggers-sa
+  triggers:
+  - triggerRef: gitlab-push-trigger
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: el-gitlab-listener-np
+  namespace: ci
+spec:
+  type: NodePort
+  selector:
+    eventlistener: gitlab-listener
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 32080

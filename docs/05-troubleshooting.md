@@ -486,6 +486,27 @@ git push
 
 ---
 
+### 7.5. PipelineRun cai no namespace `ci` em vez de `proj-*`
+
+**Sintoma:** push no GitLab dispara o pipeline, mas o `PipelineRun` aparece em `kubectl -n ci get pipelinerun` em vez de `kubectl -n proj-<repo> get pipelinerun`. Runs de projetos diferentes se misturam no mesmo namespace, usando a SA `default`.
+
+**Causa:** os recursos do Triggers ainda estão na versão single-tenant (ver `tekton-lab-setup.md`), não na versão multi-tenant (Padrão B, `tekton-multitenant.md`):
+- `TriggerTemplate` sem `metadata.namespace` dinâmico → cai no namespace do próprio EventListener (`ci`).
+- Sem `taskRunTemplate.serviceAccountName` → usa a SA `default` em vez de `pipeline-runner`.
+- `Trigger` sem o interceptor `cel` (ou com `cel` incompleto, faltando `filter`/overlay `pipeline-name`) → `target-namespace` nunca é calculado.
+
+**Diagnóstico:**
+```bash
+kubectl -n ci get triggertemplate -o yaml | grep -A2 "namespace:"
+kubectl -n ci get trigger gitlab-push-trigger -o yaml | grep -A10 interceptors
+```
+
+**Solução:** migrar `TriggerBinding`/`Trigger`/`TriggerTemplate` para o Padrão B completo — não só adicionar `target-namespace`, mas usar o `app-template` genérico com `filter` + overlays `target-namespace`/`repo-name`/`pipeline-name`, como documentado na [seção 9 de docs/02-arquitetura-multitenant.md](02-arquitetura-multitenant.md#9-etapa-2--eventlistener-multi-tenant-no-ci). Script pronto: [`scripts/ops/fix-pipelinerun-namespace.sh`](../scripts/ops/fix-pipelinerun-namespace.sh).
+
+**Cuidado com correção parcial:** uma primeira tentativa de fix pode corrigir o namespace e a SA mas manter o nome antigo `java-app-template` e não incluir `filter`/`pipeline-name` no CEL. Isso resolve o sintoma imediato (backend-* volta a rodar no namespace certo) mas reintroduz roteamento hardcoded para `java-app-pipeline` — um push futuro em repo `frontend-*` seria silenciosamente roteado para o pipeline errado em vez de cair em `node-app-pipeline`. Ao corrigir, sempre migrar para o `app-template` genérico com CEL completo, não recriar o template single-tenant.
+
+---
+
 ## 8. Kubernetes geral
 
 ### 8.1. `cannot use generate name with apply`
@@ -520,6 +541,8 @@ kubectl -n <ns> patch <resource>/<name> \
 ---
 
 ## Referências rápidas de diagnóstico
+
+> 🔧 **Playbook** — [`scripts/ops/diagnose-el.sh`](../scripts/ops/diagnose-el.sh) roda praticamente todos os comandos abaixo de uma vez (mais describe + eventos do pod do EL).
 
 ```bash
 # Status geral da plataforma

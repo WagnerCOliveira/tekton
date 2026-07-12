@@ -2,9 +2,9 @@
 
 Guia passo a passo para **montar, entender, manter e recuperar** o namespace `ci`, que concentra toda a plataforma de CI/CD do cluster.
 
-> Complemento ao [tekton-multitenant.md](tekton-multitenant.md). Enquanto aquele foca em **arquitetura e onboarding**, este documento é sobre a **operação da plataforma em si**.
-> Para troubleshooting consolidado, consulte [troubleshooting.md](troubleshooting.md).
-> Para diagramas, consulte [gemini-prompts.md](gemini-prompts.md).
+> Complemento ao [docs/02-arquitetura-multitenant.md](02-arquitetura-multitenant.md). Enquanto aquele foca em **arquitetura e onboarding**, este documento é sobre a **operação da plataforma em si**.
+> Para troubleshooting consolidado, consulte [docs/05-troubleshooting.md](05-troubleshooting.md).
+> Para diagramas, consulte [docs/06-diagramas-prompts.md](06-diagramas-prompts.md).
 
 ---
 
@@ -103,9 +103,9 @@ Ficam no registry interno (`registry.registry.svc.cluster.local:5000/tekton/*:v1
 
 Antes de mexer em qualquer coisa, entenda a cadeia de dependências:
 
-![](imagens/cadeia-de-dependencias-do-namespace-ci.png)
+![](../imagens/cadeia-de-dependencias-do-namespace-ci.png)
 
-![](imagens/ciclo-de-vida-de-uma-mudanca-no-ci.png)
+![](../imagens/ciclo-de-vida-de-uma-mudanca-no-ci.png)
 
 
 ### O que quebra se…
@@ -125,6 +125,8 @@ Antes de mexer em qualquer coisa, entenda a cadeia de dependências:
 ## 4. 🎯 PLAYBOOK: Montar o `ci` do zero
 
 Cenário: cluster limpo, Tekton já instalado, Task Bundles já publicados. Você vai montar a plataforma inteira.
+
+> 🔧 **Playbook** — os passos 1 a 7 abaixo estão automatizados em [`scripts/setup/04-bootstrap-ci.sh`](../scripts/setup/04-bootstrap-ci.sh) (idempotente, aplica os manifestos canônicos em [`yaml/ci/`](../yaml/ci/)). Use o script no dia a dia; a explicação passo a passo abaixo continua valendo para entender **por quê** cada peça existe e para recuperação manual quando algo quebra parcialmente.
 
 ### Passo 1 — Criar o namespace
 
@@ -862,6 +864,8 @@ Rollback em segundos. Isso é o valor do versionamento explícito.
 
 Cenário: o token do secret pode ter vazado (log público, screenshot compartilhado). Você precisa trocar sem parar a plataforma.
 
+> 🔧 **Playbook** — passos 1 a 3 automatizados em [`scripts/ops/rotate-webhook-token.sh`](../scripts/ops/rotate-webhook-token.sh). Os passos 4 e 5 (atualizar cada webhook no GitLab e validar) continuam manuais de propósito.
+
 ### Passo 1 — Gerar novo token
 
 ```bash
@@ -970,6 +974,8 @@ Se o `curl` interno funciona mas o do GitLab não → problema é o webhook (URL
 
 ## 9. Comandos de diagnóstico rápido
 
+> 🔧 **Playbook** — cada um destes comandos já existe como script em [`scripts/ops/`](../scripts/ops/): [`diagnose-el.sh`](../scripts/ops/diagnose-el.sh) (status + describe + logs + eventos em um único output, cobre também o Cenário B/C acima), [`show-webhook-token.sh`](../scripts/ops/show-webhook-token.sh), [`list-all-runs.sh`](../scripts/ops/list-all-runs.sh) e [`restart-el.sh`](../scripts/ops/restart-el.sh). Os aliases abaixo continuam úteis para quem prefere digitar menos no dia a dia.
+
 Cole em um `.bashrc` alias para acesso rápido:
 
 ```bash
@@ -998,7 +1004,7 @@ source ~/.bashrc
 
 ## 10. Diagramas e referências
 
-- Prompts para gerar diagramas: [gemini-prompts.md](gemini-prompts.md)
+- Prompts para gerar diagramas: [docs/06-diagramas-prompts.md](06-diagramas-prompts.md)
 
 ---
 
@@ -1010,118 +1016,3 @@ source ~/.bashrc
 - [CEL Language Definition](https://github.com/google/cel-spec/blob/master/doc/langdef.md)
 - [Kubernetes RBAC Good Practices](https://kubernetes.io/docs/concepts/security/rbac-good-practices/)
 
----
-
-<!-- Prompts Gemini movidos para gemini-prompts.md -->
-
-## Prompts para diagramas com Gemini (legado)
-
-### Prompt 1 — Anatomia do namespace ci
-
-```
-Create a detailed Kubernetes namespace anatomy diagram for a CI/CD platform:
-
-Main rectangle: "namespace: ci (Platform)"
-
-Inside, organize resources in labeled sections:
-
-Section "Identity & Access":
-- ServiceAccount: tekton-triggers-sa
-- 3 RBAC bindings with arrows to ClusterRoles
-
-Section "Secrets":
-- Secret: gitlab-webhook-secret (Opaque, shared token)
-
-Section "Pipelines" (catalog):
-- Pipeline: java-app-pipeline
-- Pipeline: node-app-pipeline
-Each with 3 taskRef references shown as small icons (bundles resolver)
-
-Section "Event Handling":
-- Trigger: gitlab-push-trigger (with 2 interceptors: gitlab + cel)
-- TriggerBinding: gitlab-push-binding
-- TriggerTemplate: app-template
-- EventListener: gitlab-listener (Ready)
-
-Section "Networking":
-- Service: el-gitlab-listener (ClusterIP)
-- Service: el-gitlab-listener-np (NodePort 32080)
-
-External arrow entering the namespace: "GitLab Webhooks POST"
-External arrow leaving toward "proj-* namespaces": "Creates PipelineRuns"
-External arrow leaving toward "Registry": "Fetches Task Bundles"
-
-Style: technical documentation, blue-and-white palette, organized sections 
-with clear labels, English, white background, clean and professional.
-```
-
-### Prompt 2 — Cadeia de dependências
-
-```
-Create a dependency graph diagram showing what breaks if platform components 
-of the ci namespace are removed or misconfigured:
-
-Central node: "Webhook received" 
-
-Descending tree structure with color-coded impact:
-
-Green nodes (no impact if isolated):
-- Individual Pipeline references
-
-Yellow nodes (partial impact):
-- Trigger interceptors (gitlab, cel) — "one stack breaks"
-
-Orange nodes (major impact):
-- TriggerTemplate app-template — "all new runs break"
-- TriggerBinding — "all new runs break"
-- gitlab-webhook-secret — "all webhooks silently rejected"
-
-Red nodes (total platform outage):
-- ServiceAccount tekton-triggers-sa — "EL crashes"
-- ClusterRoleBinding tekton-triggers-sa-cluster — "EL crashes"
-- ClusterRoleBinding create-pipelinerun — "runs never created"
-- EventListener gitlab-listener — "no webhook received"
-
-Below each node, a small caption with the recovery action.
-
-Style: dependency graph with color-coded severity, incident response 
-aesthetic, English labels, white background, professional operational 
-documentation.
-```
-
-### Prompt 3 — Ciclo de vida de uma mudança no ci
-
-```
-Create a change management workflow diagram for updating platform 
-components in the ci namespace:
-
-Horizontal swimlanes for actors:
-Lane 1: "Platform Engineer"
-Lane 2: "Task Bundle Registry"
-Lane 3: "ci namespace"
-Lane 4: "proj-* namespaces (existing apps)"
-
-Steps flowing left to right:
-1. "Edit Task YAML locally" (Lane 1)
-2. "tkn bundle push v2" (Lane 1 → Lane 2)
-3. "Create canary Pipeline v2" (Lane 3)
-4. "Manual test run in a proj-*" (Lane 4)
-5. "Validate output image" (Lane 1)
-6. "Edit official Pipeline: bump to v2" (Lane 3)
-7. "Delete canary Pipeline" (Lane 3)
-8. "Rollback path: revert to :v1" (Lane 3, dashed line back)
-
-Style: swimlane workflow diagram, orange-blue palette, arrows between 
-lanes, English labels, white background, suitable for runbook 
-documentation.
-```
-
----
-
-## Referências
-
-- [Tekton Triggers docs](https://tekton.dev/docs/triggers/)
-- [Tekton Cluster Resolver](https://tekton.dev/docs/pipelines/cluster-resolver/)
-- [Tekton Bundles Resolver](https://tekton.dev/docs/pipelines/bundle-resolver/)
-- [CEL Language Definition](https://github.com/google/cel-spec/blob/master/doc/langdef.md)
-- [Kubernetes RBAC Good Practices](https://kubernetes.io/docs/concepts/security/rbac-good-practices/)

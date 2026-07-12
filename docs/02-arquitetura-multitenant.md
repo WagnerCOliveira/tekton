@@ -2,7 +2,7 @@
 
 Documentação da evolução da plataforma Tekton de **single-tenant** (tudo em `ci`) para **multi-tenant com múltiplos stacks** (Pipeline em `ci`, PipelineRuns isolados por projeto), incluindo o playbook detalhado para adicionar novas aplicações e novas stacks.
 
-> Continuação natural do [tekton-lab-setup.md](tekton-lab-setup.md). Assume que a infraestrutura base (Tekton + Registry + GitLab + Task Bundles iniciais) está funcionando.
+> Continuação natural do [docs/01-infraestrutura-base.md](01-infraestrutura-base.md). Assume que a infraestrutura base (Tekton + Registry + GitLab + Task Bundles iniciais) está funcionando.
 
 ---
 
@@ -68,7 +68,7 @@ Isso funciona para um único projeto, mas não escala. Se um segundo time entrar
 
 ## 3. Arquitetura final escolhida (Padrão B)
 
-![Arquitetura multi-tenant final](imagens/arquitetura-multi-tenant-final.png)
+![Arquitetura multi-tenant final](../imagens/arquitetura-multi-tenant-final.png)
 
 ---
 
@@ -285,6 +285,8 @@ kubectl get pods -n tekton-pipelines-resolvers
 ---
 
 ## 9. Etapa 2 — EventListener multi-tenant no ci
+
+> 📌 Os manifestos desta etapa são explicados aqui passo a passo, mas a versão canônica aplicável vive em [`yaml/ci/`](../yaml/ci/) (`rbac.yaml`, `triggers/gitlab-push-binding.yaml`, `triggers/app-template.yaml`, `triggers/gitlab-push-trigger.yaml`, `triggers/eventlistener.yaml`) e é aplicada de uma vez por [`scripts/setup/04-bootstrap-ci.sh`](../scripts/setup/04-bootstrap-ci.sh) — ver [ADR-001](decisions/ADR-001-padrao-b-multitenant.md) e [ADR-002](decisions/ADR-002-roteamento-cel-prefixo.md).
 
 ### 9.1. RBAC completo (3 blocos)
 
@@ -542,6 +544,8 @@ kubectl -n ci get eventlistener,svc,pods
 
 Task Bundles ficam no registry e são reutilizados por qualquer Pipeline — adicionar uma nova app não requer criar novos bundles.
 
+> 📌 Fonte das Tasks: [`yaml/tasks/`](../yaml/tasks/). Publicação automatizada em [`scripts/setup/05-publish-task-bundles.sh`](../scripts/setup/05-publish-task-bundles.sh) (nunca sobrescreve tag em uso — [ADR-003](decisions/ADR-003-task-bundles-versionados.md)).
+
 ### 10.1. Catálogo atual
 
 ```bash
@@ -603,6 +607,8 @@ tkn bundle push 192.168.56.110:32000/tekton/node-build:v1 -f tasks/node-build.ya
 ---
 
 ## 11. Etapa 4 — Pipelines por stack
+
+> 📌 Fonte canônica: [`yaml/ci/pipelines/`](../yaml/ci/pipelines/).
 
 ### 11.1. java-app-pipeline
 

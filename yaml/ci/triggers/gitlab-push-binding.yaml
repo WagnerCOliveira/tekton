@@ -1,0 +1,19 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: gitlab-push-binding
+  namespace: ci
+spec:
+  params:
+  - name: repo-url
+    value: $(body.repository.git_http_url)
+  - name: revision
+    value: $(body.checkout_sha)
+  - name: short-sha
+    value: $(body.checkout_sha)
+  - name: target-namespace
+    value: $(extensions.target-namespace)
+  - name: repo-name
+    value: $(extensions.repo-name)
+  - name: pipeline-name
+    value: $(extensions.pipeline-name)
