@@ -1,0 +1,24 @@
+# EventListener + Service NodePort (HLM-20).
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: {{ .Values.eventListener.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  serviceAccountName: {{ .Values.serviceAccount.name }}
+  triggers:
+  - triggerRef: gitlab-push-trigger
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.eventListener.serviceName }}
+  namespace: {{ .Values.namespace }}
+spec:
+  type: NodePort
+  selector:
+    eventlistener: {{ .Values.eventListener.name }}
+  ports:
+  - port: {{ .Values.eventListener.port }}
+    targetPort: {{ .Values.eventListener.port }}
+    nodePort: {{ .Values.eventListener.nodePort }}

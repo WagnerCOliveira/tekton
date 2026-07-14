@@ -1,8 +1,9 @@
 Namespace {{ .Values.namespace }} provisionado com RBAC do EventListener,
-secret {{ .Values.webhook.secretName }} e cluster-resolver-config.
+secret {{ .Values.webhook.secretName }}, cluster-resolver-config, Pipelines por
+stack e Triggers/EventListener.
 
-Este chart cobre o Épico 2 do roadmap Helm (RBAC e Secrets). Pipelines,
-Triggers e EventListener entram no Épico 4 — ver docs/roadmap-helm.md.
+Este chart cobre os Épicos 2 (RBAC e Secrets) e 4 (Pipelines/Triggers/
+EventListener) do roadmap Helm — ver docs/roadmap-helm.md.
 
 Ver o token do webhook (para cadastrar no GitLab):
 
@@ -12,3 +13,16 @@ Ver o token do webhook (para cadastrar no GitLab):
 Validar os feature flags do Tekton:
 
   kubectl -n {{ .Values.featureFlags.namespace }} get cm {{ .Values.featureFlags.configMapName }} -o yaml
+
+Listar os Pipelines provisionados:
+
+  kubectl -n {{ .Values.namespace }} get pipeline
+
+Rodar o smoke test do EventListener (HLM-21):
+
+  helm test {{ .Release.Name }} -n {{ .Values.namespace }}
+
+Endpoint externo do EventListener (para cadastrar o webhook no GitLab):
+
+  IP_SERVER=$(kubectl get node k3s-server -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+  http://$IP_SERVER:{{ .Values.eventListener.nodePort }}

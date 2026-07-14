@@ -1,0 +1,70 @@
+# Pipelines por stack (HLM-17) — cada entrada em .Values.platform.stacks gera um
+# Pipeline `<stack>-pipeline`. Mesma estrutura de yaml/ci/pipelines/*.yaml:
+# clone (git-clone) -> build (Task específica da stack) -> image (kaniko-build-push).
+
+{{- range .Values.platform.stacks }}
+{{- $stack := . }}
+---
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: {{ $stack.name }}-pipeline
+  namespace: {{ $.Values.namespace }}
+spec:
+  params:
+  - name: repo-url
+    type: string
+  - name: revision
+    type: string
+    default: main
+  - name: image
+    type: string
+  {{- range $stack.pipelineParams }}
+  - name: {{ .name }}
+    type: string
+    default: {{ .default | quote }}
+  {{- end }}
+  workspaces:
+  - name: shared
+  tasks:
+  - name: clone
+    taskRef:
+      resolver: bundles
+      params:
+      - { name: bundle, value: "{{ $.Values.platform.taskBundleRegistry }}/git-clone:{{ $.Values.platform.gitCloneTag }}" }
+      - { name: name, value: git-clone }
+      - { name: kind, value: task }
+    params:
+    - { name: url, value: "$(params.repo-url)" }
+    - { name: revision, value: "$(params.revision)" }
+    workspaces:
+    - { name: output, workspace: shared }
+  - name: build
+    runAfter: [clone]
+    taskRef:
+      resolver: bundles
+      params:
+      - { name: bundle, value: "{{ $.Values.platform.taskBundleRegistry }}/{{ $stack.buildTask.name }}:{{ $stack.buildTask.tag }}" }
+      - { name: name, value: {{ $stack.buildTask.name }} }
+      - { name: kind, value: task }
+    {{- if $stack.buildTaskParams }}
+    params:
+    {{- range $stack.buildTaskParams }}
+    - { name: {{ .name }}, value: {{ .value | quote }} }
+    {{- end }}
+    {{- end }}
+    workspaces:
+    - { name: source, workspace: shared }
+  - name: image
+    runAfter: [build]
+    taskRef:
+      resolver: bundles
+      params:
+      - { name: bundle, value: "{{ $.Values.platform.taskBundleRegistry }}/kaniko-build-push:{{ $.Values.platform.kanikoTag }}" }
+      - { name: name, value: kaniko-build-push }
+      - { name: kind, value: task }
+    params:
+    - { name: image, value: "$(params.image)" }
+    workspaces:
+    - { name: source, workspace: shared }
+{{- end }}

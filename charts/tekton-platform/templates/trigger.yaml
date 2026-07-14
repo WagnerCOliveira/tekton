@@ -1,0 +1,48 @@
+# Trigger com CEL gerado a partir de .Values.platform.stacks (HLM-19) — adicionar
+# uma stack nova em values.yaml regenera o `filter` e o overlay `pipeline-name`
+# automaticamente. Ver docs/04-ci-operacional.md §5 para o playbook equivalente
+# da versão yaml/ manual (adicionar suporte a uma nova stack).
+{{- $filters := list }}
+{{- range .Values.platform.stacks }}
+{{- $filters = append $filters (printf "body.project.name.startsWith('%s')" .repoPrefix) }}
+{{- end }}
+{{- $pipelineExpr := "'UNKNOWN'" }}
+{{- range .Values.platform.stacks }}
+{{- $pipelineExpr = printf "body.project.name.startsWith('%s') ? '%s-pipeline' : %s" .repoPrefix .name $pipelineExpr }}
+{{- end }}
+apiVersion: triggers.tekton.dev/v1beta1
+kind: Trigger
+metadata:
+  name: gitlab-push-trigger
+  namespace: {{ .Values.namespace }}
+spec:
+  serviceAccountName: {{ .Values.serviceAccount.name }}
+  interceptors:
+  - ref:
+      name: "gitlab"
+    params:
+    - name: secretRef
+      value:
+        secretName: {{ .Values.webhook.secretName }}
+        secretKey: secretToken
+    - name: eventTypes
+      value: ["Push Hook"]
+  - ref:
+      name: "cel"
+    params:
+    - name: filter
+      value: >-
+        {{ join " || " $filters }}
+    - name: overlays
+      value:
+      - key: target-namespace
+        expression: "'proj-' + body.project.name"
+      - key: repo-name
+        expression: "body.project.name"
+      - key: pipeline-name
+        expression: |
+          {{ $pipelineExpr }}
+  bindings:
+  - ref: gitlab-push-binding
+  template:
+    ref: app-template

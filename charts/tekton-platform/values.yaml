@@ -1,6 +1,6 @@
-# Valores default — refletem o estado atual (yaml/ci/rbac.yaml, scripts/setup/04-bootstrap-ci.sh)
-# Escopo desta versão: Épico 2 (RBAC e Secrets). Pipelines/Triggers/EventListener
-# entram no Épico 4 (ver docs/roadmap-helm.md).
+# Valores default — refletem o estado atual (yaml/ci/rbac.yaml, yaml/ci/pipelines/*.yaml,
+# yaml/ci/triggers/*.yaml, scripts/setup/04-bootstrap-ci.sh). Épico 2 (RBAC e Secrets,
+# Sprint 3) e Épico 4 (Pipelines/Triggers/EventListener, Sprint 5) — ver docs/roadmap-helm.md.
 
 namespace: ci
 
@@ -35,3 +35,59 @@ featureFlags:
   enableClusterResolver: true
   hook:
     image: bitnami/kubectl:1.29
+
+# Épico 4 (Sprint 5): Pipelines por stack, Triggers e EventListener.
+platform:
+  # Repositório onde os Task Bundles usados pelos Pipelines estão publicados.
+  # Precisa bater com charts/tekton-bundles (registry.host + registry.repository e
+  # as tags de cada bundle) — sem amarração automática entre os dois charts até o
+  # Helmfile do Épico 5 (HLM-24).
+  taskBundleRegistry: registry.registry.svc.cluster.local:5000/tekton
+  gitCloneTag: v1
+  kanikoTag: v1
+
+  # Registry onde as imagens de aplicação (build de cada stack) são publicadas.
+  appImageRegistry: registry.registry.svc.cluster.local:5000/apps
+
+  # ServiceAccount usada pelo PipelineRun, criada no namespace proj-* pelo chart
+  # tekton-project (Épico 5 — ainda não migrado, ver yaml/projects/).
+  pipelineRunnerServiceAccount: pipeline-runner
+
+  workspace:
+    storageSize: 2Gi
+
+  # Uma entrada por stack (HLM-17). Adicionar uma stack aqui cria o Pipeline
+  # correspondente e regenera o CEL do Trigger (filter + overlay pipeline-name,
+  # HLM-19) — sem precisar tocar em nenhum template.
+  stacks:
+    - name: java-app
+      repoPrefix: "backend-"
+      buildTask:
+        name: maven-build
+        tag: v1
+      pipelineParams: []
+      buildTaskParams: []
+    - name: node-app
+      repoPrefix: "frontend-"
+      buildTask:
+        name: node-build
+        tag: v1
+      pipelineParams:
+        - name: node-version
+          default: "20"
+      buildTaskParams:
+        - name: node-version
+          value: "$(params.node-version)"
+        - name: install-command
+          value: "npm install"
+
+eventListener:
+  name: gitlab-listener
+  serviceName: el-gitlab-listener-np
+  port: 8080
+  nodePort: 32080
+
+helmTest:
+  # Projeto fake usado só pelo `helm test` (HLM-21) — precisa começar com um dos
+  # `repoPrefix` de platform.stacks para passar no filtro CEL do Trigger.
+  smokeProjectName: backend-smoketest

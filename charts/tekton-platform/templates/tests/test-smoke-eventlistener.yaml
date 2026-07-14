@@ -1,0 +1,34 @@
+# Helm test (HLM-21): valida que o EventListener aceita um webhook GitLab com o
+# token correto e retorna HTTP 202. `helm test tekton-platform` deve passar.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Values.eventListener.name }}-smoke-test
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+  - name: smoke-test
+    image: curlimages/curl:8.10.1
+    env:
+    - name: WEBHOOK_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: {{ .Values.webhook.secretName }}
+          key: secretToken
+    command: ["/bin/sh", "-c"]
+    args:
+    - |
+      set -eu
+      BODY='{"object_kind":"push","project":{"name":"{{ .Values.helmTest.smokeProjectName }}"},"repository":{"git_http_url":"http://smoke-test.invalid/repo.git"},"checkout_sha":"0000000000000000000000000000000000000000"}'
+      CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+        -X POST "http://{{ .Values.eventListener.serviceName }}.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.eventListener.port }}" \
+        -H "Content-Type: application/json" \
+        -H "X-Gitlab-Event: Push Hook" \
+        -H "X-Gitlab-Token: $WEBHOOK_TOKEN" \
+        -d "$BODY")
+      echo "HTTP $CODE"
+      [ "$CODE" = "202" ]
