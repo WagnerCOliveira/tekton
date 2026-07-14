@@ -1,0 +1,17 @@
+Task Bundles publicados em {{ .Values.namespace }} via Jobs Helm hook (pre-install/pre-upgrade):
+{{- range $key, $bundle := .Values.bundles }}
+{{- if $bundle.enabled }}
+  - {{ $.Values.registry.host }}/{{ $.Values.registry.repository }}/{{ $bundle.name }}:{{ $bundle.tag }}
+{{- end }}
+{{- end }}
+
+Este chart cobre o Épico 3 do roadmap Helm (Task Bundles). Nunca sobrescreve uma
+tag já publicada — ver docs/decisions/ADR-003-task-bundles-versionados.md.
+
+Conferir o catálogo publicado:
+
+  curl -s http://{{ .Values.registry.host }}/v2/_catalog && echo
+
+Para publicar uma nova versão de um bundle, suba a tag correspondente no values
+(ex.: `bundles.mavenBuild.tag: v2`) e rode `helm upgrade` — ver playbook em
+docs/04-ci-operacional.md §6.

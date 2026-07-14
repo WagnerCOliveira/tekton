@@ -1,0 +1,47 @@
+# Jobs que publicam os Task Bundles no registry interno (HLM-13/HLM-14).
+# Idempotentes: antes do `tkn bundle push`, verificam se a tag já existe em
+# /v2/<repository>/<task>/tags/list e pulam a publicação se sim — nunca
+# sobrescrever uma tag em uso (ver ADR-003). Rodam como hook pre-install/
+# pre-upgrade, peso -5, depois das ConfigMaps (peso -10) e antes de qualquer
+# Pipeline que dependa dos bundles (Épico 4).
+
+{{- range $key, $bundle := .Values.bundles }}
+{{- if $bundle.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $bundle.name }}-bundle-push
+  namespace: {{ $.Values.namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ $.Values.pushJob.backoffLimit }}
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: push
+        image: {{ $.Values.pushJob.image }}
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          set -eu
+          DEST="{{ $.Values.registry.host }}/{{ $.Values.registry.repository }}/{{ $bundle.name }}:{{ $bundle.tag }}"
+          if curl -sf "http://{{ $.Values.registry.host }}/v2/{{ $.Values.registry.repository }}/{{ $bundle.name }}/tags/list" 2>/dev/null | grep -q "\"{{ $bundle.tag }}\""; then
+            echo "AVISO: $DEST já existe — pulando (nunca sobrescrever tag em uso, ver ADR-003)."
+            exit 0
+          fi
+          echo "== Publicando $DEST =="
+          tkn bundle push "$DEST" -f /tasks/task.yaml
+        volumeMounts:
+        - name: task
+          mountPath: /tasks
+      volumes:
+      - name: task
+        configMap:
+          name: {{ $bundle.name }}-task
+{{- end }}
+{{- end }}

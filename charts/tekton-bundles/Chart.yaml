@@ -1,0 +1,6 @@
+apiVersion: v2
+name: tekton-bundles
+description: Publica os Task Bundles (git-clone, maven-build, node-build, kaniko-build-push) no registry interno via Jobs Helm hook idempotentes
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

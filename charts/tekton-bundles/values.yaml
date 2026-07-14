@@ -1,0 +1,38 @@
+# Valores default — publicam os Task Bundles atuais (yaml/tasks/*.yaml) pelo mesmo
+# processo de scripts/setup/05-publish-task-bundles.sh, agora como Job Helm hook
+# idempotente (HLM-12 a HLM-15). Nunca sobrescreve uma tag já publicada — ver
+# docs/decisions/ADR-003-task-bundles-versionados.md.
+
+# Namespace onde os Jobs de publicação rodam. Não é criado por este chart — assume
+# que charts/tekton-platform (HLM-08) já criou o namespace `ci`.
+namespace: ci
+
+registry:
+  host: 192.168.56.110:32000
+  repository: tekton
+
+pushJob:
+  # Precisa conter os binários `tkn` e `curl`.
+  image: gcr.io/tekton-releases/dogfooding/tkn:latest
+  backoffLimit: 2
+
+bundles:
+  gitClone:
+    enabled: true
+    name: git-clone
+    tag: v1
+    image: alpine/git:2.43.0
+  mavenBuild:
+    enabled: true
+    name: maven-build
+    tag: v1
+    image: maven:3.9-eclipse-temurin-17
+  nodeBuild:
+    enabled: true
+    name: node-build
+    tag: v1
+  kanikoBuildPush:
+    enabled: true
+    name: kaniko-build-push
+    tag: v1
+    image: gcr.io/kaniko-project/executor:v1.23.2

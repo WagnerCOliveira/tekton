@@ -1,0 +1,177 @@
+# ConfigMaps com o YAML de cada Task Bundle a publicar (HLM-12). Conteúdo
+# equivalente a yaml/tasks/*.yaml, com a imagem base de cada step parametrizada
+# em .Values.bundles. São hooks pre-install/pre-upgrade (peso -10) para existirem
+# antes dos Jobs de publicação (peso -5, ver job-bundle-push.yaml).
+
+{{- if .Values.bundles.gitClone.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.bundles.gitClone.name }}-task
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+data:
+  task.yaml: |
+    apiVersion: tekton.dev/v1
+    kind: Task
+    metadata:
+      name: git-clone
+    spec:
+      description: Clona um repositório Git no workspace.
+      params:
+      - name: url
+        type: string
+      - name: revision
+        type: string
+        default: main
+      workspaces:
+      - name: output
+      results:
+      - name: commit
+      steps:
+      - name: clone
+        image: {{ .Values.bundles.gitClone.image }}
+        script: |
+          #!/bin/sh
+          set -eu
+          cd $(workspaces.output.path)
+          git clone $(params.url) .
+          git checkout $(params.revision)
+          COMMIT=$(git rev-parse HEAD)
+          printf "%s" "$COMMIT" > $(results.commit.path)
+{{- end }}
+
+{{- if .Values.bundles.mavenBuild.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.bundles.mavenBuild.name }}-task
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+data:
+  task.yaml: |
+    apiVersion: tekton.dev/v1
+    kind: Task
+    metadata:
+      name: maven-build
+    spec:
+      description: Compila e empacota uma aplicação Java com Maven.
+      params:
+      - name: goals
+        type: string
+        default: "clean package -DskipTests"
+      workspaces:
+      - name: source
+      steps:
+      - name: build
+        image: {{ .Values.bundles.mavenBuild.image }}
+        workingDir: $(workspaces.source.path)
+        script: |
+          #!/bin/sh
+          set -eu
+          mvn $(params.goals)
+          ls -lh target/*.jar 2>/dev/null || echo "Nenhum JAR encontrado"
+{{- end }}
+
+{{- if .Values.bundles.nodeBuild.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.bundles.nodeBuild.name }}-task
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+data:
+  task.yaml: |
+    apiVersion: tekton.dev/v1
+    kind: Task
+    metadata:
+      name: node-build
+    spec:
+      description: Instala dependências e compila uma aplicação Node.js.
+      params:
+      - name: node-version
+        type: string
+        default: "20"
+      - name: build-command
+        type: string
+        default: "npm run build"
+      - name: install-command
+        type: string
+        default: "npm install"     # npm install, não npm ci (evita exigir package-lock.json)
+      workspaces:
+      - name: source
+      steps:
+      - name: install
+        image: node:$(params.node-version)-alpine
+        workingDir: $(workspaces.source.path)
+        script: |
+          #!/bin/sh
+          set -eu
+          $(params.install-command)
+      - name: build
+        image: node:$(params.node-version)-alpine
+        workingDir: $(workspaces.source.path)
+        script: |
+          #!/bin/sh
+          set -eu
+          $(params.build-command)
+          ls -lh dist/ 2>/dev/null || echo "dist nao encontrado"
+{{- end }}
+
+{{- if .Values.bundles.kanikoBuildPush.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.bundles.kanikoBuildPush.name }}-task
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+data:
+  task.yaml: |
+    apiVersion: tekton.dev/v1
+    kind: Task
+    metadata:
+      name: kaniko-build-push
+    spec:
+      description: Constrói uma imagem com Kaniko e envia para o registry.
+      params:
+      - name: image
+        type: string
+      - name: dockerfile
+        type: string
+        default: Dockerfile
+      - name: context
+        type: string
+        default: ./
+      workspaces:
+      - name: source
+      results:
+      - name: image-digest
+      steps:
+      - name: build-and-push
+        image: {{ .Values.bundles.kanikoBuildPush.image }}
+        args:
+        - --dockerfile=$(params.dockerfile)
+        - --context=$(workspaces.source.path)/$(params.context)
+        - --destination=$(params.image)
+        - --insecure
+        - --skip-tls-verify
+        - --insecure-pull
+        - --skip-tls-verify-pull
+        - --digest-file=$(results.image-digest.path)
+{{- end }}
