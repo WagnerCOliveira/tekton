@@ -1,0 +1,37 @@
+# Valores default — refletem o estado atual (yaml/ci/rbac.yaml, scripts/setup/04-bootstrap-ci.sh)
+# Escopo desta versão: Épico 2 (RBAC e Secrets). Pipelines/Triggers/EventListener
+# entram no Épico 4 (ver docs/roadmap-helm.md).
+
+namespace: ci
+
+serviceAccount:
+  name: tekton-triggers-sa
+
+# ClusterRoles referenciados aqui são criados pela instalação do Tekton Triggers
+# (fora do escopo deste chart — ver ADR-01 em docs/roadmap-helm.md).
+rbac:
+  roleBindingName: tekton-triggers-eventlistener-binding
+  eventListenerClusterRole: tekton-triggers-eventlistener-roles
+  clusterRoleBindingName: tekton-triggers-sa-cluster
+  eventListenerClusterRoleCluster: tekton-triggers-eventlistener-clusterroles
+  createPipelineRunClusterRole: tekton-triggers-create-pipelinerun
+  createPipelineRunClusterRoleBinding: tekton-triggers-sa-create-pipelinerun
+
+webhook:
+  secretName: gitlab-webhook-secret
+  # token: ""   # opcional — se omitido, gera automaticamente (randAlphaNum 40)
+                 # e preserva o valor existente em upgrades (via lookup)
+
+clusterResolver:
+  namespace: tekton-pipelines-resolvers
+  configMapName: cluster-resolver-config
+  defaultNamespace: "ci"
+  allowedNamespaces: "ci"
+
+featureFlags:
+  namespace: tekton-pipelines
+  configMapName: feature-flags
+  enableBundlesResolver: true
+  enableClusterResolver: true
+  hook:
+    image: bitnami/kubectl:1.29

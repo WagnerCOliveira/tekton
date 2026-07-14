@@ -1,0 +1,73 @@
+# Patch dos feature flags do Tekton core (ConfigMap feature-flags em
+# {{ .Values.featureFlags.namespace }}), que não é gerenciado por este chart —
+# o core do Tekton é instalado separadamente (ver ADR-01 em docs/roadmap-helm.md).
+# Roda como Helm hook antes de qualquer outro recurso depender dos flags.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: feature-flags-patcher
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: feature-flags-patcher
+  namespace: {{ .Values.featureFlags.namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: [{{ .Values.featureFlags.configMapName | quote }}]
+  verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: feature-flags-patcher
+  namespace: {{ .Values.featureFlags.namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+subjects:
+- kind: ServiceAccount
+  name: feature-flags-patcher
+  namespace: {{ .Values.namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: feature-flags-patcher
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: feature-flags-patch
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      serviceAccountName: feature-flags-patcher
+      restartPolicy: Never
+      containers:
+      - name: patch
+        image: {{ .Values.featureFlags.hook.image }}
+        command:
+        - kubectl
+        - patch
+        - configmap
+        - {{ .Values.featureFlags.configMapName }}
+        - --namespace={{ .Values.featureFlags.namespace }}
+        - --type=merge
+        - --patch={"data":{"enable-bundles-resolver":"{{ .Values.featureFlags.enableBundlesResolver }}","enable-cluster-resolver":"{{ .Values.featureFlags.enableClusterResolver }}"}}

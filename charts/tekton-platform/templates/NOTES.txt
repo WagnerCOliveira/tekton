@@ -1,0 +1,14 @@
+Namespace {{ .Values.namespace }} provisionado com RBAC do EventListener,
+secret {{ .Values.webhook.secretName }} e cluster-resolver-config.
+
+Este chart cobre o Épico 2 do roadmap Helm (RBAC e Secrets). Pipelines,
+Triggers e EventListener entram no Épico 4 — ver docs/roadmap-helm.md.
+
+Ver o token do webhook (para cadastrar no GitLab):
+
+  kubectl -n {{ .Values.namespace }} get secret {{ .Values.webhook.secretName }} \
+    -o jsonpath='{.data.secretToken}' | base64 -d && echo
+
+Validar os feature flags do Tekton:
+
+  kubectl -n {{ .Values.featureFlags.namespace }} get cm {{ .Values.featureFlags.configMapName }} -o yaml

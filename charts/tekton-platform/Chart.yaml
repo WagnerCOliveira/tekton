@@ -1,0 +1,6 @@
+apiVersion: v2
+name: tekton-platform
+description: Namespace ci — RBAC do EventListener, secret do webhook, feature flags e cluster resolver do Tekton
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
