@@ -9,6 +9,7 @@ e este projeto adere a [Semantic Versioning](https://semver.org/lang/pt-BR/).
 ### Adicionado
 - Estrutura consolidada de documentação: `docs/` (satélites numerados), `docs/decisions/` (ADRs), `scripts/{setup,ops,onboarding}/`, `yaml/{ci,projects,tasks}/`, `CHANGELOG.md` — `[Claude Code - 2026-07-12]`
 - `scripts/ops/fix-pipelinerun-namespace.sh` — corrige e migra Triggers single-tenant para o Padrão B completo (namespace dinâmico, SA `pipeline-runner`, `app-template` genérico com CEL `filter`+overlays) — `[Claude Code - 2026-07-12]`
+- `charts/tekton-registry` — primeiro chart Helm da migração (Épico 1, Sprint 2 de `docs/roadmap-helm.md`): Namespace, PVC, Deployment com liveness/readiness probes e Service NodePort, com `storage.size`, `service.nodePort`, `image.repository`/`tag` e `config.deleteEnabled` parametrizados em `values.yaml`; valores default preservam o comportamento atual de `yaml/ci/registry.yaml`. Validado com `helm lint` e `helm template` (`alpine/helm:3.14.4`); HLM-04 a HLM-07 concluídas — `[Claude Code - 2026-07-13]`
 
 ### Alterado
 - `troubleshooting.md` §7.5 — nova entrada documentando o sintoma "PipelineRun cai no namespace `ci` em vez de `proj-*`", incluindo o aviso sobre correção parcial que reintroduz roteamento hardcoded — `[Claude Code - 2026-07-12]`

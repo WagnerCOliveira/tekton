@@ -1,0 +1,9 @@
+Registry instalado em {{ .Values.namespace }}/{{ .Release.Name }}.
+
+Valide o endpoint (espera resposta "{}"):
+
+  IP_SERVER=$(kubectl get node k3s-server -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
+  curl -sf http://$IP_SERVER:{{ .Values.service.nodePort }}/v2/ && echo
+
+URL interna ao cluster (usada por Pipelines):
+  registry.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.service.port }}

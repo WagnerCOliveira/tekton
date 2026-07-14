@@ -1,0 +1,30 @@
+# Valores default — refletem o estado atual do lab (yaml/ci/registry.yaml)
+
+namespace: registry
+
+image:
+  repository: registry
+  tag: "2"
+  pullPolicy: IfNotPresent
+
+service:
+  port: 5000
+  nodePort: 32000
+
+storage:
+  size: 20Gi
+  # storageClassName: ""   # vazio = usa o StorageClass default do cluster
+
+config:
+  # REGISTRY_STORAGE_DELETE_ENABLED — HLM-07
+  deleteEnabled: true
+
+probes:
+  liveness:
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    failureThreshold: 3
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    failureThreshold: 3
