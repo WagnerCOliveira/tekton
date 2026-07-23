@@ -1,0 +1,10 @@
+Projeto {{ .Values.project.name }} provisionado em {{ include "tekton-project.namespace" . }}.
+
+Valide:
+  kubectl -n {{ include "tekton-project.namespace" . }} get sa,secret
+
+Próximos passos manuais:
+  1. Cadastrar o webhook no GitLab ({{ .Values.project.name }}) -> URL http://192.168.56.110:32080
+     Token: ./scripts/ops/show-webhook-token.sh
+  2. Garantir Dockerfile na raiz do repo
+  3. git push -- o CEL roteia automaticamente pelo prefixo do nome do repo

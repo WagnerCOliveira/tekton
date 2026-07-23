@@ -1,0 +1,6 @@
+apiVersion: v2
+name: tekton-project
+description: Provisiona namespace, credenciais do GitLab e ServiceAccount de um projeto multi-tenant (proj-*) na plataforma Tekton
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

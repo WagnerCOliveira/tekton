@@ -1,0 +1,45 @@
+# helmfile.yaml.gotmpl — orquestra uma release de charts/tekton-project por
+# projeto (Épico 5, Sprint 6 — HLM-24). Ver ADR-04 em docs/roadmap-helm.md:
+# uma release Helm por projeto (não um loop dentro do chart), para manter
+# cada Secret/PAT isolado por release em vez de um único values.yaml com
+# todos os segredos juntos.
+#
+# Extensão `.gotmpl` obrigatória: a partir do Helmfile v1, um `helmfile.yaml`
+# puro é YAML estrito — só arquivos `.yaml.gotmpl` passam pelo Go template
+# que resolve `requiredEnv` (testado com a imagem ghcr.io/helmfile/helmfile,
+# v1.7.1; sem a extensão, `requiredEnv "..."` vaza literal para o Secret).
+#
+# Onboarding de projeto novo = adicionar um bloco em `releases:` abaixo e
+# rodar `helmfile apply` (ver docs/03-onboarding-app-java.md, HLM-26).
+#
+# Uso:
+#   export PAT_BACKEND_PAYMENTS=glpat-xxxx   # PAT de cada projeto, nunca commitado
+#   export PAT_FRONTEND_PORTAL=glpat-xxxx
+#   helmfile apply                                    # todos os projetos
+#   helmfile -l name=proj-backend-payments apply       # só um projeto
+#   helmfile -l name=proj-backend-payments destroy     # remove um projeto
+
+releases:
+  - name: proj-backend-payments
+    chart: ./charts/tekton-project
+    values:
+      - values-lab.yaml
+    set:
+      - name: project.name
+        value: backend-payments
+      - name: project.stack
+        value: java
+      - name: project.gitlabPAT
+        value: '{{ requiredEnv "PAT_BACKEND_PAYMENTS" }}'
+
+  - name: proj-frontend-portal
+    chart: ./charts/tekton-project
+    values:
+      - values-lab.yaml
+    set:
+      - name: project.name
+        value: frontend-portal
+      - name: project.stack
+        value: node
+      - name: project.gitlabPAT
+        value: '{{ requiredEnv "PAT_FRONTEND_PORTAL" }}'

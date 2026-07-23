@@ -1,0 +1,12 @@
+# values-lab.yaml — valores default do laboratório para releases de
+# charts/tekton-project via helmfile.yaml (Épico 5, Sprint 6 — HLM-24).
+#
+# Compartilhado entre TODOS os projetos: username e URL do GitLab do lab.
+# O que NÃO entra aqui (varia por projeto ou é secreto) é passado no bloco
+# `set` de cada release em helmfile.yaml: project.name, project.stack e
+# project.gitlabPAT (este último via requiredEnv — nunca commitado, ver
+# ADR-03 em docs/roadmap-helm.md e HLM-29).
+
+project:
+  gitlabUser: root
+  gitlabURL: "http://192.168.56.1:8929"

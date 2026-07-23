@@ -1,0 +1,31 @@
+# Valores default — refletem scripts/onboarding/new-app.sh e
+# yaml/projects/pipeline-runner-sa.yaml.tpl (Épico 5, Sprint 6: HLM-22, HLM-23).
+# Uma release deste chart por projeto (ver helmfile.yaml e ADR-04 em
+# docs/roadmap-helm.md) — nome, PAT e stack passados via --set ou por bloco
+# no helmfile.
+
+project:
+  # Nome completo do repo, COM prefixo de stack (ex.: backend-payments,
+  # frontend-portal). Namespace final = proj-<name>. Obrigatório.
+  name: ""
+
+  # Label informativa (ex.: java, node). Não é usada no roteamento CEL do
+  # Trigger — esse usa o prefixo do nome do repo (platform.stacks[].repoPrefix
+  # em charts/tekton-platform). Opcional.
+  stack: ""
+
+  # Personal Access Token do GitLab (scope read_repository). NUNCA commitar em
+  # values.yaml versionado — passar via --set ou values-local.yaml (gitignored).
+  # Ver ADR-03 em docs/roadmap-helm.md e HLM-29.
+  gitlabPAT: ""
+
+  gitlabUser: root
+  gitlabURL: "http://192.168.56.1:8929"
+
+  # Labels extras de namespace, mescladas com tekton.dev/project e app.
+  labels: {}
+
+# Nomes fixos — o TriggerTemplate app-template (charts/tekton-platform)
+# referencia esses nomes literalmente.
+serviceAccountName: pipeline-runner
+secretName: gitlab-basic-auth

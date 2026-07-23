@@ -58,9 +58,59 @@ Manual, via UI (não dá pra automatizar sem a API do GitLab):
 
 ---
 
-## 3. Script único — namespace, secret e ServiceAccount
+## 3. Provisionar namespace, secret e ServiceAccount
 
-> 🔧 **Playbook** — este bloco equivale a `PAT=<seu-pat> ./scripts/onboarding/new-app.sh backend ${APP_NAME}` ([`scripts/onboarding/new-app.sh`](../scripts/onboarding/new-app.sh)). O script cobre as mesmas variáveis do passo 1; o bloco manual abaixo continua útil para quem quer rodar comando a comando.
+Três formas equivalentes de criar os mesmos recursos (namespace `proj-<repo>`, Secret `gitlab-basic-auth`, ServiceAccount `pipeline-runner`). **Helmfile é a recomendada** a partir do Épico 5 (Sprint 6) — as outras duas continuam funcionando e são úteis para entender o que está por baixo.
+
+### 3a. Via Helmfile (recomendado)
+
+Cada projeto é um bloco de release em [`helmfile.yaml.gotmpl`](../helmfile.yaml.gotmpl), reaproveitando o chart [`charts/tekton-project`](../charts/tekton-project). Adicionar um projeto novo = adicionar um bloco no arquivo (ver §6 de [docs/roadmap-helm.md](roadmap-helm.md) para o schema completo, e ADR-04 lá dentro para o porquê de uma release por projeto em vez de um loop no chart).
+
+1. Abra `helmfile.yaml.gotmpl` e adicione um bloco em `releases:` — substitua `backend-payments` e `PAT_BACKEND_PAYMENTS` pelo `$REPO_NAME` e por uma env var equivalente para a sua app (o arquivo é YAML puro, não faz `envsubst`; escreva os valores literais):
+
+   ```yaml
+     - name: proj-backend-payments
+       chart: ./charts/tekton-project
+       values:
+         - values-lab.yaml
+       set:
+         - name: project.name
+           value: backend-payments
+         - name: project.stack
+           value: java
+         - name: project.gitlabPAT
+           value: '{{ requiredEnv "PAT_BACKEND_PAYMENTS" }}'
+   ```
+
+2. Exporte o PAT na variável referenciada acima (**nunca commitar** o PAT — ver ADR-03 em `docs/roadmap-helm.md`):
+
+   ```bash
+   export PAT_BACKEND_PAYMENTS="cole-o-pat-aqui"
+   ```
+
+3. Aplique só esse projeto:
+
+   ```bash
+   helmfile -l name=proj-backend-payments apply
+   ```
+
+   `helm` não está instalado no host deste lab — rode via Docker se preferir não instalar `helmfile`/`helm` localmente:
+
+   ```bash
+   docker run --rm -v "$PWD":/data -w /data \
+     -e PAT_BACKEND_PAYMENTS \
+     -v ~/.kube:/root/.kube \
+     --entrypoint helmfile ghcr.io/helmfile/helmfile:latest \
+     -l name=proj-backend-payments apply
+   ```
+
+Para remover um projeto: `helmfile -l name=proj-backend-payments destroy`.
+
+### 3b. Via script (`scripts/onboarding/new-app.sh`)
+
+> 🔧 Este bloco equivale a `PAT=<seu-pat> ./scripts/onboarding/new-app.sh backend ${APP_NAME}` ([`scripts/onboarding/new-app.sh`](../scripts/onboarding/new-app.sh)). O script cobre as mesmas variáveis do passo 1.
+
+### 3c. Manual, comando a comando
 
 Com as variáveis do passo 1 exportadas, rode o bloco inteiro de uma vez:
 
@@ -219,3 +269,5 @@ Tempo estimado: ~5 minutos (fora o tempo de build do Maven/Kaniko).
 - [docs/02-arquitetura-multitenant.md](02-arquitetura-multitenant.md) — arquitetura completa e o playbook narrativo original
 - [docs/04-ci-operacional.md](04-ci-operacional.md) — operação do namespace `ci`
 - [docs/05-troubleshooting.md](05-troubleshooting.md) — problemas conhecidos
+- [docs/roadmap-helm.md](roadmap-helm.md) — backlog da migração Helm, schema de `values-lab.yaml` e ADRs (ADR-03 secrets, ADR-04 Helmfile)
+- [charts/tekton-project](../charts/tekton-project) — chart usado pelo Helmfile (§3a)

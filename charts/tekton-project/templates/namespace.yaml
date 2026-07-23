@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ include "tekton-project.namespace" . }}
+  labels:
+    tekton.dev/project: "true"
+    app: {{ .Values.project.name }}
+    {{- if .Values.project.stack }}
+    stack: {{ .Values.project.stack }}
+    {{- end }}
+    {{- with .Values.project.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}

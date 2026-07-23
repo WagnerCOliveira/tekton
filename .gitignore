@@ -1,1 +1,5 @@
 files/*
+
+# Segredos de onboarding de projeto (ADR-03, HLM-29) — nunca commitar PATs.
+values-local.yaml
+values-secret*.yaml
