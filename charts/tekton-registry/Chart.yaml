@@ -2,5 +2,5 @@ apiVersion: v2
 name: tekton-registry
 description: Docker Registry v2 interno da plataforma Tekton (Task Bundles e imagens de aplicação)
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "2"

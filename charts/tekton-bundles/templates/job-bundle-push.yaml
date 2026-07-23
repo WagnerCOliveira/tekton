@@ -25,6 +25,8 @@ spec:
       containers:
       - name: push
         image: {{ $.Values.pushJob.image }}
+        resources:
+          {{- toYaml $.Values.pushJob.resources | nindent 10 }}
         command: ["/bin/sh", "-c"]
         args:
         - |

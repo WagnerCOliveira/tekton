@@ -13,6 +13,8 @@ spec:
   containers:
   - name: smoke-test
     image: curlimages/curl:8.10.1
+    resources:
+      {{- toYaml .Values.helmTest.resources | nindent 6 }}
     env:
     - name: WEBHOOK_TOKEN
       valueFrom:

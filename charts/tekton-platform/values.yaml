@@ -35,6 +35,14 @@ featureFlags:
   enableClusterResolver: true
   hook:
     image: bitnami/kubectl:1.29
+    # HLM-31 — Job de um único `kubectl patch`, roda e termina.
+    resources:
+      requests:
+        cpu: 20m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 64Mi
 
 # Épico 4 (Sprint 5): Pipelines por stack, Triggers e EventListener.
 platform:
@@ -91,3 +99,24 @@ helmTest:
   # Projeto fake usado só pelo `helm test` (HLM-21) — precisa começar com um dos
   # `repoPrefix` de platform.stacks para passar no filtro CEL do Trigger.
   smokeProjectName: backend-smoketest
+  # HLM-31 — Pod de teste, um curl e sai.
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      cpu: 100m
+      memory: 32Mi
+
+# Épico 6 (Sprint 7): exposição NodePort do Tekton Dashboard (HLM-27, HLM-28).
+# O Dashboard em si não é gerenciado por este chart — é instalado à parte
+# (scripts/setup/01-install-tekton.sh, ver ADR-01 em docs/roadmap-helm.md).
+# Este chart só cria o Service NodePort, replicando docs/01-infraestrutura-base.md
+# §12 Opção 2. HLM-27 tinha ficado de fora do Sprint 3 original — feita aqui como
+# pré-requisito de HLM-28.
+dashboard:
+  enabled: true
+  namespace: tekton-pipelines
+  serviceName: tekton-dashboard-np
+  port: 9097
+  nodePort: 32097

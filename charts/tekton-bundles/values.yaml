@@ -15,6 +15,14 @@ pushJob:
   # Precisa conter os binários `tkn` e `curl`.
   image: gcr.io/tekton-releases/dogfooding/tkn:latest
   backoffLimit: 2
+  # HLM-31 — Job roda uma vez por bundle, curta duração; sizing conservador.
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
 
 bundles:
   gitClone:

@@ -1,0 +1,14 @@
+# values-prod.yaml — SCAFFOLD (HLM-25). Este lab hoje só tem UM cluster real
+# (o k3s local descrito em docs/01-infraestrutura-base.md) — não existe um
+# ambiente de produção de fato. Este arquivo existe só para o mecanismo de
+# `environments:` do Helmfile funcionar e já ficar pronto pro dia em que um
+# cluster de prod real existir; os valores abaixo são placeholders e
+# PRECISAM ser substituídos antes de qualquer `helmfile -e prod` real.
+#
+# Uso: helmfile -e prod apply   (hoje isso aplicaria contra o MESMO cluster
+# do values-lab.yaml, só que com host/user diferentes — não rode isso sem
+# antes apontar pra um cluster de prod de verdade e revisar os valores).
+
+project:
+  gitlabUser: "TROCAR-ANTES-DE-USAR"
+  gitlabURL: "https://TROCAR-ANTES-DE-USAR"

@@ -1,0 +1,20 @@
+# Service NodePort do Tekton Dashboard (HLM-27, HLM-28) — o Deployment/Pod do
+# Dashboard em si vive fora deste chart (instalação separada do core do Tekton,
+# ver ADR-01 em docs/roadmap-helm.md); este recurso só expõe a porta.
+# Réplica de docs/01-infraestrutura-base.md §12 Opção 2 (NodePort permanente).
+{{- if .Values.dashboard.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.dashboard.serviceName }}
+  namespace: {{ .Values.dashboard.namespace }}
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: dashboard
+    app.kubernetes.io/part-of: tekton-dashboard
+  ports:
+  - port: {{ .Values.dashboard.port }}
+    targetPort: {{ .Values.dashboard.port }}
+    nodePort: {{ .Values.dashboard.nodePort }}
+{{- end }}

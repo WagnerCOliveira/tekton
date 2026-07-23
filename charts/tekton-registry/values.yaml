@@ -28,3 +28,27 @@ probes:
     initialDelaySeconds: 5
     periodSeconds: 5
     failureThreshold: 3
+
+# HLM-30 — a imagem registry:2 roda como root por padrão; forçamos um UID não-root
+# e filesystem read-only (o único caminho de escrita do processo é o volume de
+# dados em /var/lib/registry, já montado gravável — não há outro estado local).
+# fsGroup garante que o PVC monta com permissão de escrita pro runAsUser.
+# Não validado contra cluster real (sem cluster disponível nesta migração, só
+# helm lint/template) — se o storage provisioner do lab não respeitar fsGroup,
+# revisar antes do primeiro `helm upgrade` em produção do lab.
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+
+# HLM-31 — sizing conservador para um registry de lab (poucas apps, sem carga
+# concorrente pesada). Ajustar se `kubectl top pod -n registry` mostrar throttling.
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi

@@ -12,18 +12,41 @@
 # Onboarding de projeto novo = adicionar um bloco em `releases:` abaixo e
 # rodar `helmfile apply` (ver docs/03-onboarding-app-java.md, HLM-26).
 #
+# Ambientes (HLM-25, Sprint 7): `lab` é o único ambiente real hoje — `prod`
+# é um scaffold em values-prod.yaml, com placeholders, pra quando existir um
+# cluster de prod de verdade (ver o comentário no topo daquele arquivo).
+# `default` aponta pro `lab` para que `helmfile apply` sem `-e` continue
+# funcionando como antes de HLM-25 ser implementada.
+#
 # Uso:
 #   export PAT_BACKEND_PAYMENTS=glpat-xxxx   # PAT de cada projeto, nunca commitado
 #   export PAT_FRONTEND_PORTAL=glpat-xxxx
-#   helmfile apply                                    # todos os projetos
-#   helmfile -l name=proj-backend-payments apply       # só um projeto
-#   helmfile -l name=proj-backend-payments destroy     # remove um projeto
+#   helmfile apply                                       # todos os projetos, ambiente lab (default)
+#   helmfile -e lab apply                                # idem, explícito
+#   helmfile -e prod apply                                # ambiente prod (scaffold — revisar values-prod.yaml antes)
+#   helmfile -l name=proj-backend-payments apply          # só um projeto
+#   helmfile -l name=proj-backend-payments destroy        # remove um projeto
+
+environments:
+  default:
+    values:
+      - values-lab.yaml
+  lab:
+    values:
+      - values-lab.yaml
+  prod:
+    values:
+      - values-prod.yaml
+
+---
 
 releases:
   - name: proj-backend-payments
     chart: ./charts/tekton-project
     values:
-      - values-lab.yaml
+      - project:
+          gitlabUser: '{{ .Values.project.gitlabUser }}'
+          gitlabURL: '{{ .Values.project.gitlabURL }}'
     set:
       - name: project.name
         value: backend-payments
@@ -35,7 +58,9 @@ releases:
   - name: proj-frontend-portal
     chart: ./charts/tekton-project
     values:
-      - values-lab.yaml
+      - project:
+          gitlabUser: '{{ .Values.project.gitlabUser }}'
+          gitlabURL: '{{ .Values.project.gitlabURL }}'
     set:
       - name: project.name
         value: frontend-portal

@@ -26,3 +26,9 @@ Endpoint externo do EventListener (para cadastrar o webhook no GitLab):
 
   IP_SERVER=$(kubectl get node k3s-server -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}')
   http://$IP_SERVER:{{ .Values.eventListener.nodePort }}
+{{- if .Values.dashboard.enabled }}
+
+Tekton Dashboard (HLM-27/28):
+
+  http://$IP_SERVER:{{ .Values.dashboard.nodePort }}
+{{- end }}

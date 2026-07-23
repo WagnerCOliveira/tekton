@@ -63,6 +63,8 @@ spec:
       containers:
       - name: patch
         image: {{ .Values.featureFlags.hook.image }}
+        resources:
+          {{- toYaml .Values.featureFlags.hook.resources | nindent 10 }}
         command:
         - kubectl
         - patch

@@ -29,6 +29,7 @@ Ver [`_template.md`](_template.md) neste diretório.
 | [ADR-003](ADR-003-task-bundles-versionados.md) | Task Bundles versionados imutáveis | Aceito |
 | [ADR-004](ADR-004-gitlab-docker-network-host.md) | GitLab CE via Docker Compose com `network_mode: host` | Aceito |
 | [ADR-005](ADR-005-registry-interno-http.md) | Registry interno HTTP com `registries.yaml` | Aceito |
+| [ADR-006](ADR-006-avaliacao-sealed-secrets.md) | Não adotar Sealed Secrets no lab (por enquanto) | Aceito |
 
 ## Nota sobre `helm-backlog.md`
 
