@@ -2,6 +2,8 @@
 
 Consolidação de todos os recursos Kubernetes da plataforma Tekton em Helm charts, eliminando YAML manual e IPs hardcoded. Este documento é o backlog completo de implementação.
 
+> **Status: 38/38 histórias concluídas (2026-07-23).** Sprints 2 a 8 implementados — ver `CHANGELOG.md` para o detalhe de cada sprint e `docs/decisions/` (ADR-006, ADR-007) para as decisões que saíram do escopo original. Este documento fica como registro histórico do planejamento; o estado atual dos charts é a fonte de verdade (`charts/`).
+
 ---
 
 ## Sumário

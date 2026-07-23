@@ -19,6 +19,8 @@ Guia passo a passo para **montar, entender, manter e recuperar** o namespace `ci
 7. [🎯 PLAYBOOK: Rotacionar o token do webhook](#7--playbook-rotacionar-o-token-do-webhook)
 8. [🎯 PLAYBOOK: Recuperar o `ci` após incidente](#8--playbook-recuperar-o-ci-após-incidente)
 9. [Comandos de diagnóstico rápido](#9-comandos-de-diagnóstico-rápido)
+10. [Diagramas e referências](#10-diagramas-e-referências)
+11. [🎯 PLAYBOOK: Publicar novas versões dos charts Helm](#11--playbook-publicar-novas-versões-dos-charts-helm-hlm-35)
 
 ---
 
@@ -1074,6 +1076,58 @@ source ~/.bashrc
 ## 10. Diagramas e referências
 
 - Prompts para gerar diagramas: [docs/06-diagramas-prompts.md](06-diagramas-prompts.md)
+
+---
+
+## 11. 🎯 PLAYBOOK: Publicar novas versões dos charts Helm (HLM-35)
+
+Meta: a própria plataforma Tekton publica as novas versões dos charts Helm que a constroem (`charts/tekton-registry`, `tekton-platform`, `tekton-bundles`, `tekton-project`) como artefatos OCI no registry interno — mesma tecnologia dos Task Bundles (ADR-003), só que para os charts em si.
+
+> ⚠️ **Não testado contra cluster real** — assim como o resto da migração Helm (ver nota em `docs/roadmap-helm.md`), só há `kubectl`/cluster disponível fora desta sessão de trabalho. `yaml/tasks/helm-chart-publish.yaml` e `yaml/ci/pipelines/publish-helm-charts-pipeline.yaml` foram validados só como YAML sintaticamente válido — não há schema Tekton público pronto pra validação offline (tentado via `kubeconform`, sem schema disponível), e não existe cluster de teste alcançável nesta migração para um `kubectl apply --dry-run=server`. Revisar com atenção antes do primeiro uso real. Ver também [ADR-007](decisions/ADR-007-limitacoes-cicd-charts.md).
+
+### O que o Pipeline faz
+
+1. `clone` — clona este repositório (`https://github.com/WagnerCOliveira/tekton.git` por default; assume que o cluster tem saída à internet — só a entrada na rede do lab é bloqueada, não necessariamente a saída)
+2. `publish-chart` — roda em `matrix` sobre os 4 charts, um `helm package` + `helm push ... --plain-http` cada (Task `helm-chart-publish`, registry `registry.registry.svc.cluster.local:5000/charts` por default — DNS interno, ver ADR-005)
+
+### Passo 1 — Aplicar Task e Pipeline (não são gerenciados por nenhum chart — são meta, um caso à parte)
+
+```bash
+kubectl apply -f yaml/tasks/helm-chart-publish.yaml -n ci
+kubectl apply -f yaml/ci/pipelines/publish-helm-charts-pipeline.yaml
+```
+
+### Passo 2 — Disparar manualmente
+
+```bash
+tkn pipeline start publish-helm-charts-pipeline -n ci \
+  --workspace name=shared,volumeClaimTemplateFile=- <<'EOF'
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+EOF
+```
+
+### Passo 3 — Validar
+
+```bash
+tkn pipelinerun logs -f -n ci --last
+
+# Charts publicados no registry:
+curl -s http://192.168.56.110:32000/v2/charts/tekton-registry/tags/list
+curl -s http://192.168.56.110:32000/v2/charts/tekton-platform/tags/list
+curl -s http://192.168.56.110:32000/v2/charts/tekton-bundles/tags/list
+curl -s http://192.168.56.110:32000/v2/charts/tekton-project/tags/list
+```
+
+### Instalar a partir do OCI publicado
+
+```bash
+helm install tekton-registry oci://192.168.56.110:32000/charts/tekton-registry \
+  --version <versão do Chart.yaml> --plain-http
+```
 
 ---
 

@@ -1,0 +1,101 @@
+# .gitlab-ci.yml — CI dos próprios charts Helm (Épico 8, Sprint 8 do roadmap
+# Helm: HLM-33, HLM-34). Ver docs/roadmap-helm.md.
+#
+# Este repositório vive no GitHub (github.com/WagnerCOliveira/tekton) — este
+# arquivo só tem efeito se o repo for espelhado/migrado para um GitLab com
+# runner próprio. Mantido conforme o roadmap original, que pede GitLab CI
+# explicitamente. Ver docs/decisions/ADR-007-limitacoes-cicd-charts.md para
+# o porquê e as limitações conhecidas dos jobs de `dry-run` (stage abaixo).
+
+stages:
+  - validate
+  - dry-run
+
+variables:
+  HELM_IMAGE: "alpine/helm:3.14.4"
+
+# HLM-33 — helm lint + helm template em todo MR e em push no branch default.
+# Roda no runner GitLab genérico: cada chart é hermético (sem cluster, sem
+# rede do lab), então funciona em qualquer runner compartilhado.
+.lint_template:
+  stage: validate
+  image: $HELM_IMAGE
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+lint:tekton-registry:
+  extends: .lint_template
+  script:
+    - helm lint --strict charts/tekton-registry
+    - helm template charts/tekton-registry
+
+lint:tekton-platform:
+  extends: .lint_template
+  script:
+    - helm lint --strict charts/tekton-platform
+    - helm template charts/tekton-platform
+
+lint:tekton-bundles:
+  extends: .lint_template
+  script:
+    - helm lint --strict charts/tekton-bundles
+    - helm template charts/tekton-bundles
+
+lint:tekton-project:
+  extends: .lint_template
+  script:
+    # project.name e project.gitlabPAT são `required` — valores dummy só pra
+    # exercitar o template em CI, nunca usados de verdade (ver charts/tekton-project/values.yaml).
+    - helm lint --strict charts/tekton-project --set project.name=ci-smoketest --set project.gitlabPAT=dummy-ci-pat
+    - helm template charts/tekton-project --set project.name=ci-smoketest --set project.gitlabPAT=dummy-ci-pat
+
+# HLM-34 — dry-run contra um cluster de teste real (helm upgrade --install
+# --dry-run), validando contra o kube-apiserver de verdade (CRDs do Tekton,
+# admission webhooks etc.), não só a sintaxe YAML que o `helm template` já
+# cobre. Requisitos que este lab NÃO tem hoje:
+#   1. Um runner GitLab com rota até a rede 192.168.56.0/24 (runners
+#      compartilhados do GitLab.com/GitHub não alcançam essa rede local)
+#   2. Uma variável CI `KUBECONFIG_TEST_CLUSTER` (protegida, arquivo)
+#      apontando pro cluster de teste
+# Por isso os jobs abaixo são `when: manual` e falham rápido com uma
+# mensagem clara se KUBECONFIG_TEST_CLUSTER não estiver configurada, em vez
+# de fingir sucesso ou rodar contra o cluster errado. Ver ADR-007.
+.dry_run:
+  stage: dry-run
+  image: $HELM_IMAGE
+  when: manual
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  before_script:
+    - |
+      if [ -z "${KUBECONFIG_TEST_CLUSTER:-}" ]; then
+        echo "KUBECONFIG_TEST_CLUSTER não configurada — este job precisa de"
+        echo "um runner com rota até o cluster de teste do lab e da variável"
+        echo "CI apontando pro kubeconfig. Ver docs/decisions/ADR-007-limitacoes-cicd-charts.md."
+        exit 1
+      fi
+    - export KUBECONFIG="$KUBECONFIG_TEST_CLUSTER"
+
+dry-run:tekton-registry:
+  extends: .dry_run
+  script:
+    - helm upgrade --install tekton-registry ./charts/tekton-registry --dry-run
+
+dry-run:tekton-platform:
+  extends: .dry_run
+  script:
+    - helm upgrade --install tekton-platform ./charts/tekton-platform --dry-run
+
+dry-run:tekton-bundles:
+  extends: .dry_run
+  script:
+    - helm upgrade --install tekton-bundles ./charts/tekton-bundles --dry-run
+
+dry-run:tekton-project:
+  extends: .dry_run
+  script:
+    - helm upgrade --install proj-ci-smoketest ./charts/tekton-project --dry-run
+      --set project.name=ci-smoketest --set project.gitlabPAT=dummy-ci-pat

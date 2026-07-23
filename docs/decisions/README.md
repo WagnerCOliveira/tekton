@@ -30,6 +30,7 @@ Ver [`_template.md`](_template.md) neste diretório.
 | [ADR-004](ADR-004-gitlab-docker-network-host.md) | GitLab CE via Docker Compose com `network_mode: host` | Aceito |
 | [ADR-005](ADR-005-registry-interno-http.md) | Registry interno HTTP com `registries.yaml` | Aceito |
 | [ADR-006](ADR-006-avaliacao-sealed-secrets.md) | Não adotar Sealed Secrets no lab (por enquanto) | Aceito |
+| [ADR-007](ADR-007-limitacoes-cicd-charts.md) | Manter GitLab CI conforme o roadmap, mesmo com o repo no GitHub — e assumir as limitações de infra do Sprint 8 | Aceito |
 
 ## Nota sobre `helm-backlog.md`
 

@@ -1,0 +1,48 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: publish-helm-charts-pipeline
+  namespace: ci
+spec:
+  description: >-
+    Pipeline meta (HLM-35): publica os 4 charts Helm deste repositório
+    (charts/tekton-registry, tekton-platform, tekton-bundles, tekton-project)
+    como artefatos OCI no registry interno, usando a própria plataforma
+    Tekton que os charts constroem. Disparo manual, não é roteado pelo CEL
+    do EventListener — ver playbook em docs/04-ci-operacional.md §11.
+  params:
+  - name: repo-url
+    type: string
+    default: https://github.com/WagnerCOliveira/tekton.git
+  - name: revision
+    type: string
+    default: main
+  workspaces:
+  - name: shared
+  tasks:
+  - name: clone
+    taskRef:
+      resolver: bundles
+      params:
+      - { name: bundle, value: "registry.registry.svc.cluster.local:5000/tekton/git-clone:v1" }
+      - { name: name, value: git-clone }
+      - { name: kind, value: task }
+    params:
+    - { name: url, value: "$(params.repo-url)" }
+    - { name: revision, value: "$(params.revision)" }
+    workspaces:
+    - { name: output, workspace: shared }
+  - name: publish-chart
+    runAfter: [clone]
+    matrix:
+      params:
+      - name: chart-path
+        value:
+        - charts/tekton-registry
+        - charts/tekton-platform
+        - charts/tekton-bundles
+        - charts/tekton-project
+    taskRef:
+      name: helm-chart-publish
+    workspaces:
+    - { name: source, workspace: shared }
