@@ -68,3 +68,17 @@ releases:
         value: node
       - name: project.gitlabPAT
         value: '{{ requiredEnv "PAT_FRONTEND_PORTAL" }}'
+
+  - name: proj-backend-crud-pipeline
+    chart: ./charts/tekton-project
+    values:
+      - project:
+          gitlabUser: '{{ .Values.project.gitlabUser }}'
+          gitlabURL: '{{ .Values.project.gitlabURL }}'
+    set:
+      - name: project.name
+        value: backend-crud-pipeline
+      - name: project.stack
+        value: java
+      - name: project.gitlabPAT
+        value: '{{ requiredEnv "PAT_BACKEND_CRUD_PIPELINE" }}'
