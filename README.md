@@ -73,10 +73,11 @@ yaml/
 ```
 Host Notebook
 ├─ wlo1        192.168.0.13    (Wi-Fi)
+│   │
+│   └─ GitLab CE (Docker, network_mode: host) → :8929
 ├─ virbr0      192.168.121.1   (libvirt default)
 └─ virbr1      192.168.56.1    (rede das VMs k3s)
     │
-    ├─ GitLab CE (Docker, network_mode: host) → :8929
     └─ Cluster k3s (192.168.56.0/24)
          ├─ k3s-server   192.168.56.110
          ├─ k3s-agent-1

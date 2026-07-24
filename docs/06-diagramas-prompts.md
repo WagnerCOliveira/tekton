@@ -104,7 +104,7 @@ Create a horizontal end-to-end sequence diagram showing a CI/CD workflow:
 
 Actors from left to right:
 1. Developer (person icon) with label "git push"
-2. GitLab CE server icon (192.168.56.1:8929) — detects push, creates
+2. GitLab CE server icon (192.168.0.13:8929) — detects push, creates
    "Push Hook"
 3. Tekton EventListener (192.168.56.110:32080) — validates X-Gitlab-Token,
    runs interceptor, extracts params via TriggerBinding, renders TriggerTemplate

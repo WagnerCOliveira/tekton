@@ -11,7 +11,7 @@
 #   nome               nome curto da app, sem prefixo (ex.: payments)
 #
 # Variáveis de ambiente opcionais:
-#   GITLAB_URL   (default: http://192.168.56.1:8929)
+#   GITLAB_URL   (default: http://192.168.0.13:8929)
 #   GITLAB_USER  (default: root)
 #   PAT          (obrigatória — Personal Access Token com scope read_repository)
 
@@ -24,7 +24,7 @@ usage() {
   echo "  nome               nome curto da app, sem prefixo (ex.: payments)"
   echo
   echo "Variáveis de ambiente:"
-  echo "  GITLAB_URL   default: http://192.168.56.1:8929"
+  echo "  GITLAB_URL   default: http://192.168.0.13:8929"
   echo "  GITLAB_USER  default: root"
   echo "  PAT          obrigatória — Personal Access Token (scope read_repository)"
 }
@@ -48,7 +48,7 @@ if [[ -z "${PAT:-}" ]]; then
   exit 1
 fi
 
-GITLAB_URL="${GITLAB_URL:-http://192.168.56.1:8929}"
+GITLAB_URL="${GITLAB_URL:-http://192.168.0.13:8929}"
 GITLAB_USER="${GITLAB_USER:-root}"
 REPO_NAME="${STACK}-${APP_NAME}"
 NAMESPACE="proj-${REPO_NAME}"

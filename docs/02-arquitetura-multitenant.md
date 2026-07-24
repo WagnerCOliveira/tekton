@@ -149,7 +149,7 @@ Este é o coração da arquitetura multi-tenant.
     "name": "frontend-angular"
   },
   "repository": {
-    "git_http_url": "http://192.168.56.1:8929/root/frontend-angular.git"
+    "git_http_url": "http://192.168.0.13:8929/root/frontend-angular.git"
   }
 }
 ```
@@ -754,7 +754,7 @@ O CEL do Trigger lê `body.project.name` e decide qual Pipeline aplicar pelo pre
 4. **Initialize repository with a README:** desmarcar
 5. **Create project**
 
-Anote a URL do repo: `http://192.168.56.1:8929/root/backend-payments.git`
+Anote a URL do repo: `http://192.168.0.13:8929/root/backend-payments.git`
 
 ---
 
@@ -790,7 +790,7 @@ kubectl -n proj-backend-payments create secret generic gitlab-basic-auth \
 
 # Anotar: "use esse secret quando clonar dessa URL"
 kubectl -n proj-backend-payments annotate secret gitlab-basic-auth \
-  tekton.dev/git-0=http://192.168.56.1:8929
+  tekton.dev/git-0=http://192.168.0.13:8929
 
 # ServiceAccount pipeline-runner com o secret
 cat <<'EOF' | kubectl apply -f -
@@ -882,7 +882,7 @@ cd backend-payments
 git init
 git add .
 git commit -m "Initial commit"
-git remote add origin http://192.168.56.1:8929/root/backend-payments.git
+git remote add origin http://192.168.0.13:8929/root/backend-payments.git
 git push -u origin main
 ```
 

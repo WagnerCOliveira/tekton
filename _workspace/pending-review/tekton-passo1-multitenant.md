@@ -225,7 +225,7 @@ A anotação `tekton.dev/git-0` diz ao Tekton "use esse secret quando clonar des
 
 ```bash
 kubectl -n proj-java-app annotate secret gitlab-basic-auth \
-  tekton.dev/git-0=http://192.168.56.1:8929
+  tekton.dev/git-0=http://192.168.0.13:8929
 ```
 
 ### 6.4. Criar ServiceAccount dedicada com o secret anexado
@@ -269,7 +269,7 @@ spec:
       value: ci
   params:
   - name: repo-url
-    value: http://192.168.56.1:8929/root/java-app.git
+    value: http://192.168.0.13:8929/root/java-app.git
   - name: revision
     value: main
   - name: image
@@ -540,7 +540,7 @@ kubectl -n proj-node-app create secret generic gitlab-basic-auth \
   --from-literal=password='<PAT_NODE_APP>'
 
 kubectl -n proj-node-app annotate secret gitlab-basic-auth \
-  tekton.dev/git-0=http://192.168.56.1:8929
+  tekton.dev/git-0=http://192.168.0.13:8929
 
 # 3. Criar ServiceAccount
 cat <<'EOF' | kubectl apply -f -
@@ -682,7 +682,7 @@ error: from cross-ns-test-: cannot use generate name with apply
 
 **Sintoma:** log da task clone:
 ```
-fatal: could not read Username for 'http://192.168.56.1:8929': 
+fatal: could not read Username for 'http://192.168.0.13:8929': 
 No such device or address
 ```
 
@@ -705,7 +705,7 @@ Mesmo com o secret criado no `proj-java-app`.
    - **Solução:**
      ```bash
      kubectl -n proj-java-app get secret gitlab-basic-auth -o yaml | grep -A2 annotations
-     # deve mostrar: tekton.dev/git-0: http://192.168.56.1:8929
+     # deve mostrar: tekton.dev/git-0: http://192.168.0.13:8929
      ```
 
 ### 11.3. EL retorna 202 mas PipelineRun não é criado no namespace do projeto

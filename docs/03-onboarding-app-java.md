@@ -25,7 +25,7 @@ Defina estas variáveis **antes** de rodar qualquer comando. É a única parte m
 | `APP_NAME` | Nome curto da aplicação, sem prefixo | `payments` |
 | `REPO_NAME` | `backend-<APP_NAME>` (prefixo obrigatório p/ o CEL rotear pro pipeline Java) | `backend-payments` |
 | `NAMESPACE` | `proj-<REPO_NAME>` | `proj-backend-payments` |
-| `GITLAB_URL` | Host do GitLab | `http://192.168.56.1:8929` |
+| `GITLAB_URL` | Host do GitLab | `http://192.168.0.13:8929` |
 | `GITLAB_USER` | Usuário dono do PAT | `root` |
 | `PAT` | Personal Access Token (scope `read_repository`) gerado no Passo 2 | `glpat-xxxxxxxxxxxx` |
 
@@ -35,7 +35,7 @@ Exporte tudo no terminal (ajuste os valores):
 export APP_NAME="payments"
 export REPO_NAME="backend-${APP_NAME}"
 export NAMESPACE="proj-${REPO_NAME}"
-export GITLAB_URL="http://192.168.56.1:8929"
+export GITLAB_URL="http://192.168.0.13:8929"
 export GITLAB_USER="root"
 export PAT="cole-o-pat-aqui"
 ```

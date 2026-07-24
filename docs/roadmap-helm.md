@@ -82,7 +82,7 @@ Tudo que hoje é aplicado via `kubectl apply`, scripts shell ou documentação m
 |---|---|
 | Namespace | nome, labels `tekton.dev/project` e `app` |
 | Secret `gitlab-basic-auth` | username `root`, PAT passado na mão |
-| Annotation no Secret | URL do GitLab: `http://192.168.56.1:8929` |
+| Annotation no Secret | URL do GitLab: `http://192.168.0.13:8929` |
 | ServiceAccount `pipeline-runner` | referência ao secret |
 
 ### 1.7. Tekton Dashboard — exposição NodePort (hoje: `kubectl apply` inline)
@@ -185,7 +185,7 @@ Tudo que está hardcoded hoje e precisa virar `values.yaml`:
 
 | Categoria | Valor atual | Chave proposta |
 |---|---|---|
-| **Rede** | `192.168.56.1` (GitLab host) | `global.gitlab.host` |
+| **Rede** | `192.168.0.13` (GitLab host) | `global.gitlab.host` |
 | **Rede** | `192.168.56.110` (k3s server IP) | `global.cluster.serverIP` |
 | **Rede** | `8929` (GitLab porta) | `global.gitlab.port` |
 | **Portas** | `32000` (Registry NodePort) | `registry.service.nodePort` |
@@ -414,7 +414,7 @@ Exemplo completo do `values.yaml` do umbrella chart ou do `values-lab.yaml` cent
 global:
   # Configurações de rede do lab
   gitlab:
-    host: "192.168.56.1"
+    host: "192.168.0.13"
     port: 8929
     username: "root"
     # gitlabPAT: NUNCA commitar — passar via --set ou values-local.yaml

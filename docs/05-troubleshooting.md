@@ -315,7 +315,7 @@ services:
     # ports:                  # REMOVER (incompatível com host mode)
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://192.168.56.1:8929'
+        external_url 'http://192.168.0.13:8929'
         nginx['listen_port'] = 8929   # obrigatório sem ports:
 ```
 
@@ -332,7 +332,7 @@ docker compose up -d
 
 **Sintoma no log da task `git-clone`:**
 ```
-fatal: could not read Username for 'http://192.168.56.1:8929':
+fatal: could not read Username for 'http://192.168.0.13:8929':
 No such device or address
 ```
 
@@ -354,7 +354,7 @@ spec:
 **B) Anotação do secret incorreta ou ausente:**
 ```bash
 kubectl -n <ns> get secret gitlab-basic-auth -o yaml | grep -A2 annotations
-# deve mostrar: tekton.dev/git-0: http://192.168.56.1:8929
+# deve mostrar: tekton.dev/git-0: http://192.168.0.13:8929
 ```
 
 **C) PAT expirado ou com scope errado** — precisa `read_repository`.
@@ -369,7 +369,7 @@ kubectl -n <ns> create secret generic gitlab-basic-auth \
   --from-literal=password='<PAT>'
 
 kubectl -n <ns> annotate secret gitlab-basic-auth \
-  tekton.dev/git-0=http://192.168.56.1:8929
+  tekton.dev/git-0=http://192.168.0.13:8929
 
 cat <<'EOF' | kubectl apply -f -
 apiVersion: v1

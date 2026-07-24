@@ -20,7 +20,7 @@ project:
   gitlabPAT: ""
 
   gitlabUser: root
-  gitlabURL: "http://192.168.56.1:8929"
+  gitlabURL: "http://192.168.0.13:8929"
 
   # Labels extras de namespace, mescladas com tekton.dev/project e app.
   labels: {}

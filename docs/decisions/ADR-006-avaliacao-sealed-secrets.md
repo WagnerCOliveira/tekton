@@ -16,7 +16,7 @@ Sealed Secrets resolveria isso: o operador cripta o PAT localmente com a chave p
 ## Decisão
 **Não adotar Sealed Secrets agora.** Manter `requiredEnv`/`--set` (ADR-03) como abordagem do lab. Revisitar esta decisão se qualquer uma destas condições mudar:
 - O lab passar a ter mais de uma pessoa operando (hoje é uso individual — não há "quem tinha acesso" a auditar além do próprio operador)
-- Os PATs passarem a proteger algo além de `read_repository` em repositórios de um GitLab local isolado (`192.168.56.1:8929`, sem exposição externa)
+- Os PATs passarem a proteger algo além de `read_repository` em repositórios de um GitLab local isolado (`192.168.0.13:8929`, sem exposição externa)
 - O projeto sair do estágio de laboratório pessoal (ver `README.md` para o contexto geral da plataforma)
 
 ## Consequências

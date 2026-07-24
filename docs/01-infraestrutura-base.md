@@ -607,7 +607,7 @@ kubectl -n ci get pipeline
 ip -4 addr show | grep 192.168
 ```
 
-Identifique a interface que está na mesma sub-rede das VMs — normalmente `virbr1` com IP `192.168.56.1`.
+Identifique a interface pela qual as VMs conseguem alcançar o host — hoje `wlo1` com IP `192.168.0.13` (a interface `virbr1`, `192.168.56.1`, é usada só para o tráfego interno das VMs, não para o GitLab).
 
 ### 8.2. Estrutura
 
@@ -630,7 +630,7 @@ services:
     network_mode: host
     environment:
       GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://192.168.56.1:8929'
+        external_url 'http://192.168.0.13:8929'
         nginx['listen_port'] = 8929
         gitlab_rails['gitlab_shell_ssh_port'] = 2224
         puma['worker_processes'] = 2
@@ -752,7 +752,7 @@ Enviar:
 git init
 git add .
 git commit -m "Initial commit"
-git remote add origin http://192.168.56.1:8929/root/java-app.git
+git remote add origin http://192.168.0.13:8929/root/java-app.git
 git push -u origin main
 ```
 
@@ -949,7 +949,7 @@ kubectl -n ci create secret generic gitlab-basic-auth \
   --from-literal=password='<PAT>'
 
 kubectl -n ci annotate secret gitlab-basic-auth \
-  tekton.dev/git-0=http://192.168.56.1:8929
+  tekton.dev/git-0=http://192.168.0.13:8929
 
 kubectl -n ci patch serviceaccount default \
   -p '{"secrets":[{"name":"gitlab-basic-auth"}]}'

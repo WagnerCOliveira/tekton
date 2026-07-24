@@ -134,7 +134,7 @@ Aqui está o coração da arquitetura — o momento onde o CEL calcula o roteame
   "checkout_sha": "82a57d1...",
   "project": {
     "name": "frontend-angular",
-    "git_http_url": "http://192.168.56.1:8929/root/frontend-angular.git"
+    "git_http_url": "http://192.168.0.13:8929/root/frontend-angular.git"
   }
 }
 ```
@@ -609,7 +609,7 @@ Na UI do GitLab:
 4. **Initialize repository with a README:** desmarcar
 5. **Create project**
 
-**Anote a URL do repo** que aparece no topo, tipicamente `http://192.168.56.1:8929/root/backend-payments.git`.
+**Anote a URL do repo** que aparece no topo, tipicamente `http://192.168.0.13:8929/root/backend-payments.git`.
 
 ---
 
@@ -649,7 +649,7 @@ kubectl -n proj-backend-payments create secret generic gitlab-basic-auth \
 # 3. Anotar o secret com a URL do GitLab
 #    (o Tekton usa essa anotação pra saber "quando clonar dessa URL, use esse secret")
 kubectl -n proj-backend-payments annotate secret gitlab-basic-auth \
-  tekton.dev/git-0=http://192.168.56.1:8929
+  tekton.dev/git-0=http://192.168.0.13:8929
 
 # 4. ServiceAccount pipeline-runner com o secret anexado
 cat <<'EOF' | kubectl apply -f -
@@ -757,7 +757,7 @@ cd backend-payments
 git init
 git add .
 git commit -m "Initial commit"
-git remote add origin http://192.168.56.1:8929/root/backend-payments.git
+git remote add origin http://192.168.0.13:8929/root/backend-payments.git
 git push -u origin main
 ```
 
@@ -932,7 +932,7 @@ Todos os problemas enfrentados durante a construção do multi-tenant.
 
 **Sintoma:**
 ```
-fatal: could not read Username for 'http://192.168.56.1:8929'
+fatal: could not read Username for 'http://192.168.0.13:8929'
 ```
 
 **Causas possíveis (em ordem de probabilidade):**
@@ -949,7 +949,7 @@ fatal: could not read Username for 'http://192.168.56.1:8929'
    ```bash
    kubectl -n <ns> get secret gitlab-basic-auth -o yaml | grep -A2 annotations
    ```
-   Deve mostrar `tekton.dev/git-0: http://192.168.56.1:8929`.
+   Deve mostrar `tekton.dev/git-0: http://192.168.0.13:8929`.
 
 4. **PAT expirado ou com scope errado** (precisa `read_repository`).
 
