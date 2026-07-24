@@ -810,15 +810,14 @@ O Tekton faz cache dos bundles pelo digest. Se você sobrescrever `v1`:
 
 ### 6a. Via Helm (recomendado — HLM-16)
 
-Usa `charts/tekton-bundles` para publicar a nova tag e `charts/tekton-platform` para migrar o Pipeline, mantendo a mesma disciplina do ADR-003 (nunca sobrescrever tag em uso) — só que a mudança agora fica em `values.yaml`, versionada e revertível com `helm upgrade` em vez de `kubectl edit` ad-hoc. Comandos abaixo usam `alpine/helm:3.14.4` via Docker (`helm` não está instalado no host deste lab, ver `charts/*/values.yaml`).
+Usa `charts/tekton-bundles` para publicar a nova tag e `charts/tekton-platform` para migrar o Pipeline, mantendo a mesma disciplina do ADR-003 (nunca sobrescrever tag em uso) — só que a mudança agora fica em `values.yaml`, versionada e revertível com `helm upgrade` em vez de `kubectl edit` ad-hoc. Comandos abaixo usam o `helm` instalado no host (ver `docs/07-bootstrap-helm.md` §2 se preferir rodar via Docker).
 
 #### Passo 1 — Publicar a nova tag do bundle
 
 Edite `bundles.mavenBuild.tag` (e `.image`, se a imagem base também mudou) em `charts/tekton-bundles/values.yaml` (ou passe via `--set`) e faça upgrade:
 
 ```bash
-docker run --rm -v "$PWD":/data -w /data -v ~/.kube:/root/.kube \
-  alpine/helm:3.14.4 upgrade tekton-bundles ./charts/tekton-bundles \
+helm upgrade tekton-bundles ./charts/tekton-bundles \
   --set bundles.mavenBuild.tag=v2
 ```
 
@@ -829,8 +828,7 @@ O Job `pre-install,pre-upgrade` é idempotente: publica `maven-build:v2` só se 
 Em vez de copiar o Pipeline manualmente, adicione uma entrada temporária em `platform.stacks` (em `charts/tekton-platform/values.yaml` ou via `--set`) apontando pra tag nova — isso gera um Pipeline `java-app-v2-pipeline` sem tocar no `java-app-pipeline` oficial:
 
 ```bash
-docker run --rm -v "$PWD":/data -w /data -v ~/.kube:/root/.kube \
-  alpine/helm:3.14.4 upgrade tekton-platform ./charts/tekton-platform \
+helm upgrade tekton-platform ./charts/tekton-platform \
   --set 'platform.stacks[2].name=java-app-v2' \
   --set 'platform.stacks[2].repoPrefix=backend-canary-' \
   --set 'platform.stacks[2].buildTask.name=maven-build' \
@@ -844,8 +842,7 @@ docker run --rm -v "$PWD":/data -w /data -v ~/.kube:/root/.kube \
 Validado o canário, troque a tag na stack real e faça o upgrade — isso re-renderiza `java-app-pipeline` com `maven-build:v2`:
 
 ```bash
-docker run --rm -v "$PWD":/data -w /data -v ~/.kube:/root/.kube \
-  alpine/helm:3.14.4 upgrade tekton-platform ./charts/tekton-platform \
+helm upgrade tekton-platform ./charts/tekton-platform \
   --set 'platform.stacks[0].buildTask.tag=v2'
 ```
 
@@ -859,8 +856,7 @@ Apague a entrada temporária de `platform.stacks` e faça upgrade de novo — o 
 
 ```bash
 # Reverte só o Pipeline (Task Bundle v1 nunca foi apagado do registry)
-docker run --rm -v "$PWD":/data -w /data -v ~/.kube:/root/.kube \
-  alpine/helm:3.14.4 upgrade tekton-platform ./charts/tekton-platform \
+helm upgrade tekton-platform ./charts/tekton-platform \
   --set 'platform.stacks[0].buildTask.tag=v1'
 
 # Ou volta pro release Helm anterior inteiro

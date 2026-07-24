@@ -9,7 +9,7 @@ Guia único para subir a plataforma inteira (`charts/tekton-registry`, `charts/t
 ## Sumário
 
 1. [Pré-requisitos (fora do escopo dos charts)](#1-pré-requisitos-fora-do-escopo-dos-charts)
-2. [`helm` via Docker](#2-helm-via-docker)
+2. [`helm`](#2-helm)
 3. [Passo 1 — `tekton-registry`](#3-passo-1--tekton-registry)
 4. [Passo 2 — `tekton-platform`](#4-passo-2--tekton-platform)
 5. [Passo 3 — `tekton-bundles`](#5-passo-3--tekton-bundles)
@@ -37,15 +37,13 @@ Por decisão de arquitetura (ADR-01 em `docs/roadmap-helm.md`), a instalação d
 
 ---
 
-## 2. `helm` via Docker
+## 2. `helm`
 
-`helm` não está instalado no host deste lab (mesma observação em `docs/04-ci-operacional.md` §6a). Todos os comandos abaixo usam `alpine/helm:3.14.4` via Docker:
+`helm` está instalado no host deste lab — os comandos abaixo chamam o binário diretamente. Se preferir não instalar localmente, dá pra rodar via Docker substituindo `helm` por:
 
 ```bash
-alias helmd='docker run --rm -v "$PWD":/data -w /data -v ~/.kube:/root/.kube alpine/helm:3.14.4'
+alias helm='docker run --rm -v "$PWD":/data -w /data -v ~/.kube:/root/.kube alpine/helm:3.14.4'
 ```
-
-(substitua `helmd` por `helm` diretamente se preferir instalar o binário)
 
 ---
 
@@ -54,7 +52,7 @@ alias helmd='docker run --rm -v "$PWD":/data -w /data -v ~/.kube:/root/.kube alp
 Não depende de nenhum outro chart. Cria o namespace `registry`, PVC, Deployment e Service NodePort (`32000` por default).
 
 ```bash
-helmd upgrade --install tekton-registry ./charts/tekton-registry
+helm upgrade --install tekton-registry ./charts/tekton-registry
 ```
 
 **Validar:**
@@ -72,7 +70,7 @@ curl -sf http://$IP_SERVER:32000/v2/ && echo   # espera "{}"
 Depende do **Tekton core já instalado** (Passo 0). Cria o namespace `ci`, RBAC do EventListener, Secret do webhook, patch dos feature flags, Pipelines por stack (`java-app-pipeline`, `node-app-pipeline`), Triggers/EventListener e o Service NodePort do Dashboard.
 
 ```bash
-helmd upgrade --install tekton-platform ./charts/tekton-platform
+helm upgrade --install tekton-platform ./charts/tekton-platform
 ```
 
 `platform.taskBundleRegistry` (default `registry.registry.svc.cluster.local:5000/tekton`) precisa bater com `registry.host`/`repository` do `charts/tekton-bundles` (Passo 3) — já vêm consistentes nos defaults dos dois charts; só reconferir se algum dos dois valores for sobrescrito.
@@ -91,7 +89,7 @@ kubectl -n tekton-pipelines get cm feature-flags -o yaml | grep -E "enable-bundl
 Depende do namespace `ci` já existir (Passo 2) **e** do registry já estar de pé e alcançável em `registry.host` (Passo 1) — o Job de publicação roda `tkn bundle push` contra `192.168.56.110:32000` (IP:NodePort, não o DNS interno — ver ADR-005 em `docs/roadmap-helm.md`).
 
 ```bash
-helmd upgrade --install tekton-bundles ./charts/tekton-bundles
+helm upgrade --install tekton-bundles ./charts/tekton-bundles
 ```
 
 Os Jobs (`pre-install,pre-upgrade`) são idempotentes: só publicam uma tag se ela ainda não existir no registry (ADR-003 — nunca sobrescrevem tag em uso).

@@ -94,7 +94,7 @@ Cada projeto é um bloco de release em [`helmfile.yaml.gotmpl`](../helmfile.yaml
    helmfile -l name=proj-backend-payments apply
    ```
 
-   `helm` não está instalado no host deste lab — rode via Docker se preferir não instalar `helmfile`/`helm` localmente:
+   `helm` está instalado no host deste lab; se preferir não instalar `helmfile` localmente, dá pra rodar via Docker:
 
    ```bash
    docker run --rm -v "$PWD":/data -w /data \
