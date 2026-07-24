@@ -155,6 +155,8 @@ charts/
 
 ### Instalação de cada chart
 
+> ⚠️ Exemplo do planejamento original — cita um chart `tekton-lab` (umbrella) que nunca foi criado e usa `-f values-lab.yaml` em charts que não consomem esse arquivo. Para o playbook de bootstrap atual e testado, ver [docs/07-bootstrap-helm.md](07-bootstrap-helm.md).
+
 ```bash
 # Registry
 helm upgrade --install tekton-registry ./charts/tekton-registry \

@@ -24,6 +24,7 @@ Este `README.md` é o índice central do projeto. Os documentos técnicos aprofu
 | [docs/04-ci-operacional.md](docs/04-ci-operacional.md) | Operação do namespace `ci`: inventário, playbooks, diagnóstico | Operando a plataforma |
 | [docs/05-troubleshooting.md](docs/05-troubleshooting.md) | Todos os problemas encontrados, organizados por categoria | Investigando um problema |
 | [docs/06-diagramas-prompts.md](docs/06-diagramas-prompts.md) | Prompts para gerar diagramas com Gemini/Imagen | Gerando diagramas |
+| [docs/07-bootstrap-helm.md](docs/07-bootstrap-helm.md) | Playbook: subir a plataforma inteira via Helm (registry → platform → bundles), na ordem certa | Montando a plataforma do zero via Helm |
 | [docs/roadmap-helm.md](docs/roadmap-helm.md) | Backlog completo da migração para Helm (38 histórias, 8 sprints) | Planejando a migração Helm |
 | [docs/decisions/](docs/decisions/) | ADRs — por que a arquitetura é do jeito que é | Entender uma decisão passada, ou propor uma nova |
 | [CHANGELOG.md](CHANGELOG.md) | Histórico de mudanças versionado (Keep a Changelog + SemVer) | Ver o que mudou recentemente |
